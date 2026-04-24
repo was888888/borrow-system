@@ -537,6 +537,7 @@ function showDeleteModal(i) {
         showLoading();
         await db.from('items').delete().eq('id', it.id);
         await loadData();
+        initInventory();
         hideDeleteModal();
         showToast('已删除');
     };
