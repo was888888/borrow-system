@@ -524,10 +524,19 @@ async function addNewItem() {
     if (items.find(i => i.name === name)) { showToast('该物品已存在'); return; }
     
     const { data, error } = await db.from('items').insert({ name, total: qty, borrowed: 0 }).select();
-    if (!error && data && data[0]) {
-        items.push(data[0]);
-        initInventory();
+    if (error) {
+        showToast('添加失败');
+        return;
     }
+    // 添加到本地数组
+    if (data && data[0]) {
+        items.push(data[0]);
+    } else {
+        // 如果没返回数据，重新加载items
+        const { data: itemsData } = await db.from('items').select('*');
+        items = itemsData || [];
+    }
+    initInventory();
     hideAddItemModal();
     showToast('添加成功');
 }
