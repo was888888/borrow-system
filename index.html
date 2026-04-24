@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>借还物品管理</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -14,325 +15,82 @@
         }
         .page { display: none; }
         .page.active { display: block; }
-        
-        /* 首页 */
-        .home-header { 
-            background: rgba(255,255,255,0.12); 
-            color: white; 
-            padding: 45px 20px 32px; 
-            text-align: center; 
-        }
-        .home-header h1 { font-size: 1.9rem; margin-bottom: 6px; font-weight: 700; letter-spacing: 0.5px; }
-        .home-header p { opacity: 0.85; font-size: 0.9rem; font-weight: 400; }
-        
-        .card-container { 
-            padding: 20px; 
-            max-width: 500px; 
-            margin: 0 auto; 
-            display: grid; 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 14px; 
-        }
-        .nav-card { 
-            background: white; 
-            border-radius: 18px; 
-            padding: 24px 15px; 
-            text-align: center; 
-            cursor: pointer; 
-            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-            transition: transform 0.2s, box-shadow 0.2s;
-            position: relative;
-            overflow: hidden;
-        }
-        .nav-card:active { transform: scale(0.96); box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+        .home-header { background: rgba(255,255,255,0.12); color: white; padding: 45px 20px 32px; text-align: center; }
+        .home-header h1 { font-size: 1.9rem; margin-bottom: 6px; font-weight: 700; }
+        .home-header p { opacity: 0.85; font-size: 0.9rem; }
+        .card-container { padding: 20px; max-width: 500px; margin: 0 auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+        .nav-card { background: white; border-radius: 18px; padding: 24px 15px; text-align: center; cursor: pointer; box-shadow: 0 8px 30px rgba(0,0,0,0.12); transition: transform 0.2s; position: relative; }
+        .nav-card:active { transform: scale(0.96); }
         .nav-card .icon { font-size: 2.4rem; margin-bottom: 8px; display: block; }
         .nav-card .title { font-size: 1.05rem; font-weight: 700; color: #333; }
-        .nav-card .desc { font-size: 0.75rem; color: #888; margin-top: 4px; line-height: 1.4; }
-        .nav-card .badge { 
-            position: absolute; 
-            top: 12px; 
-            right: 12px; 
-            background: #ff5252; 
-            color: white; 
-            font-size: 0.7rem; 
-            padding: 3px 9px; 
-            border-radius: 12px; 
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(255,82,82,0.4);
-        }
-        
-        /* 最近借出提醒 */
-        .recent-borrow {
-            margin: 0 20px 20px;
-            max-width: 460px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .recent-borrow-card {
-            background: white;
-            border-radius: 14px;
-            padding: 14px 16px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-        .recent-borrow-card .avatar {
-            width: 44px;
-            height: 44px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 1.1rem;
-            flex-shrink: 0;
-        }
+        .nav-card .desc { font-size: 0.75rem; color: #888; margin-top: 4px; }
+        .nav-card .badge { position: absolute; top: 12px; right: 12px; background: #ff5252; color: white; font-size: 0.7rem; padding: 3px 9px; border-radius: 12px; font-weight: 600; }
+        .recent-borrow { margin: 0 20px 20px; max-width: 460px; margin-left: auto; margin-right: auto; }
+        .recent-borrow-card { background: white; border-radius: 14px; padding: 14px 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 14px; }
+        .recent-borrow-card .avatar { width: 44px; height: 44px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 1.1rem; }
         .recent-borrow-card .info { flex: 1; min-width: 0; }
         .recent-borrow-card .name { font-weight: 600; color: #333; font-size: 0.95rem; }
         .recent-borrow-card .items { font-size: 0.8rem; color: #888; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .recent-borrow-card .action {
-            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 25px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            font-weight: 500;
-            box-shadow: 0 3px 10px rgba(76,175,80,0.3);
-            transition: transform 0.2s;
-        }
-        .recent-borrow-card .action:active { transform: scale(0.95); }
-        
-        /* 页面头部 */
-        .page-header { 
-            background: white; 
-            padding: 12px 15px; 
-            display: flex; 
-            align-items: center; 
-            gap: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .back-btn { 
-            width: 36px; 
-            height: 36px; 
-            border: none; 
-            background: #f0f0f0; 
-            border-radius: 10px; 
-            font-size: 1.3rem; 
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        .recent-borrow-card .action { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white; border: none; padding: 10px 18px; border-radius: 25px; font-size: 0.85rem; cursor: pointer; font-weight: 500; }
+        .page-header { background: white; padding: 12px 15px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); position: sticky; top: 0; z-index: 100; }
+        .back-btn { width: 36px; height: 36px; border: none; background: #f0f0f0; border-radius: 10px; font-size: 1.3rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .page-header h1 { font-size: 1.2rem; color: #333; }
-        
         .content { padding: 15px; max-width: 500px; margin: 0 auto; padding-bottom: 100px; }
         .card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
         .card-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 12px; color: #667eea; }
-        
-        .form-group { margin-bottom: 12px; position: relative; }
+        .form-group { margin-bottom: 12px; }
         .form-group label { display: block; font-size: 0.85rem; color: #666; margin-bottom: 5px; }
-        select, input[type="text"], input[type="number"] { 
-            width: 100%; 
-            padding: 10px 12px; 
-            border: 1px solid #e0e0e0; 
-            border-radius: 10px; 
-            font-size: 1rem; 
-            background: #fafafa;
-            transition: border-color 0.2s, background 0.2s;
-        }
+        select, input[type="text"], input[type="number"] { width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 1rem; background: #fafafa; }
         select:focus, input:focus { outline: none; border-color: #667eea; background: white; }
-        
-        /* 可搜索下拉框 */
         .search-select { position: relative; }
         .search-select input { padding-right: 35px; }
-        .search-select .dropdown-icon {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            pointer-events: none;
-            color: #888;
-            font-size: 0.8rem;
-        }
-        .search-select .dropdown-list {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            margin-top: 5px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 10;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
+        .search-select .dropdown-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #888; font-size: 0.8rem; }
+        .search-select .dropdown-list { display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #e0e0e0; border-radius: 10px; margin-top: 5px; max-height: 200px; overflow-y: auto; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .search-select .dropdown-list.show { display: block; }
-        .search-select .dropdown-item {
-            padding: 10px 12px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 0.95rem;
-        }
+        .search-select .dropdown-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 0.95rem; }
         .search-select .dropdown-item:last-child { border-bottom: none; }
         .search-select .dropdown-item:hover { background: #f5f5f5; }
-        .search-select .dropdown-item.active { background: #e8f0fe; color: #667eea; }
         .search-select .dropdown-empty { padding: 10px 12px; color: #999; font-size: 0.9rem; text-align: center; }
-        
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; cursor: pointer; margin-top: 8px; transition: transform 0.15s, opacity 0.15s; font-weight: 500; }
-        .btn:active { transform: scale(0.98); opacity: 0.9; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; cursor: pointer; margin-top: 8px; transition: transform 0.15s; font-weight: 500; }
+        .btn:active { transform: scale(0.98); }
         .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 4px 15px rgba(102,126,234,0.4); }
         .btn-secondary { background: #f5f5f5; color: #333; }
         .btn-success { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white; box-shadow: 0 3px 10px rgba(76,175,80,0.3); }
-        .btn-danger { background: linear-gradient(135deg, #ff5252 0%, #e53935 100%); color: white; box-shadow: 0 3px 10px rgba(255,82,82,0.3); }
+        .btn-danger { background: linear-gradient(135deg, #ff5252 0%, #e53935 100%); color: white; }
         .btn-small { padding: 8px 16px; font-size: 0.85rem; width: auto; margin-top: 0; }
         .btn-add { background: #e8f0fe; color: #667eea; border: 1px dashed #667eea; }
-        
-        .borrow-item { 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-            padding: 10px; 
-            background: #f8f9fa; 
-            border-radius: 10px; 
-            margin-bottom: 8px; 
-        }
+        .borrow-item { display: flex; align-items: center; gap: 8px; padding: 10px; background: #f8f9fa; border-radius: 10px; margin-bottom: 8px; }
         .borrow-item .search-select { flex: 1; margin-bottom: 0; }
         .borrow-item .search-select input { margin-bottom: 0; }
         .borrow-item input[type="number"] { width: 65px; margin-bottom: 0; text-align: center; padding: 8px; }
-        .remove-btn { 
-            width: 32px; 
-            height: 32px; 
-            border: none; 
-            background: #ffebee; 
-            color: #e53935; 
-            border-radius: 8px; 
-            font-size: 1.3rem; 
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        
-        /* 归还列表 */
+        .remove-btn { width: 32px; height: 32px; border: none; background: #ffebee; color: #e53935; border-radius: 8px; font-size: 1.3rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .return-group { margin-bottom: 15px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        .return-group-header { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            color: white; 
-            padding: 14px 16px; 
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .return-group-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
         .return-group-header-left { display: flex; flex-direction: column; gap: 4px; }
-        .return-group-header-left .name { font-weight: 600; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; }
-        .return-group-header-left .name::before { content: '👤'; font-size: 1rem; }
+        .return-group-header-left .name { font-weight: 600; font-size: 1.05rem; }
         .return-group-header-left .time { font-size: 0.72rem; opacity: 0.85; }
         .return-group-body { background: white; }
-        .return-item { 
-            padding: 14px 16px; 
-            border-bottom: 1px solid #f5f5f5; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            transition: background 0.2s;
-        }
+        .return-item { padding: 14px 16px; border-bottom: 1px solid #f5f5f5; display: flex; justify-content: space-between; align-items: center; }
         .return-item:last-child { border-bottom: none; }
-        .return-item:active { background: #fafafa; }
         .return-item-name { font-weight: 500; font-size: 0.95rem; color: #333; }
-        .return-item-name small { color: #888; font-weight: 400; margin-left: 4px; }
-        
-        /* 历史记录 */
-        .history-card { 
-            background: white; 
-            border-radius: 16px; 
-            margin-bottom: 12px; 
-            overflow: hidden; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08); 
-        }
-        .history-header { 
-            padding: 12px 16px; 
-            background: #f8f9fa; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-        }
+        .history-card { background: white; border-radius: 16px; margin-bottom: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .history-header { padding: 12px 16px; background: #f8f9fa; display: flex; justify-content: space-between; align-items: center; }
         .history-left { display: flex; align-items: center; gap: 12px; }
-        .history-avatar {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
+        .history-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.9rem; }
         .history-borrower { font-weight: 600; color: #333; font-size: 0.95rem; }
         .history-time { font-size: 0.72rem; color: #888; }
         .history-items { padding: 10px 16px; }
-        .history-item { 
-            padding: 8px 0; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            border-bottom: 1px solid #f5f5f5;
-            font-size: 0.9rem;
-        }
+        .history-item { padding: 8px 0; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f5f5f5; font-size: 0.9rem; }
         .history-item:last-child { border-bottom: none; }
         .history-item.returned { color: #999; }
         .history-item .item-name { color: #333; }
         .history-item .item-qty { color: #667eea; font-weight: 500; }
-        .status-badge { 
-            padding: 4px 10px; 
-            border-radius: 12px; 
-            font-size: 0.72rem; 
-            font-weight: 600;
-        }
+        .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 600; }
         .status-borrowed { background: #fff3e0; color: #f57c00; }
         .status-returned { background: #e8f5e9; color: #388e3c; }
-        
-        .search-box { 
-            padding: 10px 15px; 
-            background: white; 
-            position: sticky;
-            top: 60px;
-            z-index: 50;
-        }
-        .search-box input { 
-            width: 100%; 
-            padding: 10px 15px; 
-            border: none; 
-            border-radius: 25px; 
-            background: #f5f5f5;
-            font-size: 0.9rem;
-        }
-        
-        /* 库存 */
-        .inventory-item { 
-            padding: 14px 16px; 
-            background: white; 
-            border-radius: 14px; 
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
+        .search-box { padding: 10px 15px; background: white; position: sticky; top: 60px; z-index: 50; }
+        .search-box input { width: 100%; padding: 10px 15px; border: none; border-radius: 25px; background: #f5f5f5; font-size: 0.9rem; }
+        .inventory-item { padding: 14px 16px; background: white; border-radius: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
         .inventory-item:active { transform: scale(0.98); }
         .inventory-name { font-weight: 600; color: #333; font-size: 0.95rem; }
         .inventory-stock { font-size: 0.85rem; color: #666; margin-top: 4px; }
@@ -341,52 +99,22 @@
         .inventory-right { text-align: right; }
         .inventory-right .count { font-size: 1.4rem; font-weight: 700; color: #667eea; }
         .inventory-right .unit { font-size: 0.75rem; color: #888; }
-        
         .empty { text-align: center; padding: 30px; color: #999; font-size: 0.9rem; }
-        
-        /* Toast提示 */
-        .toast {
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 25px;
-            font-size: 0.9rem;
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-            font-weight: 500;
-        }
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 24px; border-radius: 25px; font-size: 0.9rem; z-index: 1000; opacity: 0; transition: opacity 0.3s; pointer-events: none; font-weight: 500; }
         .toast.show { opacity: 1; }
-        
-        /* 弹窗 */
-        .modal-overlay { 
-            display: none; 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            right: 0; 
-            bottom: 0; 
-            background: rgba(0,0,0,0.5); 
-            z-index: 200; 
-            align-items: center;
-            justify-content: center;
-        }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; }
         .modal-overlay.active { display: flex; }
         .modal { background: white; border-radius: 20px; padding: 24px; width: 90%; max-width: 320px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
         .modal-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; text-align: center; color: #333; }
         .modal-buttons { display: flex; gap: 12px; margin-top: 18px; }
         .modal-buttons .btn { flex: 1; }
+        .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 20px 30px; border-radius: 15px; font-size: 1rem; z-index: 2000; }
     </style>
 </head>
 <body>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
+<div class="loading" id="loading" style="display:none;">加载中...</div>
 
 <!-- 首页 -->
 <div id="home" class="page active">
@@ -415,7 +143,7 @@
         <div class="nav-card" onclick="showPage('inventory')">
             <div class="icon">📋</div>
             <div class="title">库存</div>
-            <div class="desc" id="stockInfo">9 种物品</div>
+            <div class="desc" id="stockInfo">加载中...</div>
         </div>
     </div>
 </div>
@@ -430,7 +158,7 @@
         <div class="card">
             <div class="card-title">借用人</div>
             <div class="search-select" id="borrowerSearchSelect">
-                <input type="text" id="borrowerInput" placeholder="输入或选择姓名" autocomplete="off" oninput="filterBorrowerList()" onfocus="showBorrowerList()" onkeypress="if(event.key==='Enter')document.getElementById('borrowBtn').click()">
+                <input type="text" id="borrowerInput" placeholder="输入或选择姓名" autocomplete="off" oninput="filterBorrowerList()" onfocus="showBorrowerList()">
                 <span class="dropdown-icon">▼</span>
                 <div class="dropdown-list" id="borrowerDropdown"></div>
             </div>
@@ -513,35 +241,19 @@
 </div>
 
 <script>
-var data = {
-    items: [
-        { name: '投影仪', total: 2, borrowed: 0 },
-        { name: '移动硬盘', total: 5, borrowed: 0 },
-        { name: '无线鼠标', total: 10, borrowed: 0 },
-        { name: '订书机', total: 8, borrowed: 0 },
-        { name: '计算器', total: 6, borrowed: 0 },
-        { name: '文件夹', total: 20, borrowed: 0 },
-        { name: '电钻', total: 2, borrowed: 0 },
-        { name: '工具箱', total: 3, borrowed: 0 },
-        { name: '测距仪', total: 1, borrowed: 0 }
-    ],
-    records: [],
-    sessions: [],
-    borrowers: []
-};
+const SUPABASE_URL = 'https://mdvohtoxmipbufwvmumj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kdm9odG94bWlwYnVmd3ZtdW1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MTA4NDEsImV4cCI6MjA5MjQ4Njg0MX0.HVj2VgonVNgWRMP5_CJIzTlBc9nLRPfpEPCILCvRRME';
 
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+var items = [];
+var records = [];
+var borrowers = [];
 var currentBorrowItems = [];
-var deleteTargetIndex = -1;
 
-function loadData() {
-    var saved = localStorage.getItem('borrowDataV4');
-    if (saved) data = JSON.parse(saved);
-}
-
-function saveData() {
-    localStorage.setItem('borrowDataV4', JSON.stringify(data));
-}
-
+function showLoading() { document.getElementById('loading').style.display = 'block'; }
+function hideLoading() { document.getElementById('loading').style.display = 'none'; }
 function showToast(msg) {
     var toast = document.getElementById('toast');
     toast.textContent = msg;
@@ -549,13 +261,27 @@ function showToast(msg) {
     setTimeout(function() { toast.classList.remove('show'); }, 1500);
 }
 
-function showPage(pageId) {
-    var pages = document.querySelectorAll('.page');
-    for (var i = 0; i < pages.length; i++) {
-        pages[i].classList.remove('active');
+async function loadData() {
+    showLoading();
+    try {
+        const { data: itemsData } = await db.from('items').select('*');
+        items = itemsData || [];
+        
+        const { data: recordsData } = await db.from('records').select('*').order('borrow_time', { ascending: false });
+        records = recordsData || [];
+        
+        borrowers = [...new Set(records.map(r => r.borrower))];
+        updateHome();
+    } catch (e) {
+        console.error(e);
+        showToast('加载数据失败，请检查网络');
     }
+    hideLoading();
+}
+
+function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(pageId).classList.add('active');
-    
     if (pageId === 'home') updateHome();
     if (pageId === 'borrow') initBorrow();
     if (pageId === 'return') initReturn();
@@ -564,64 +290,50 @@ function showPage(pageId) {
 }
 
 function updateHome() {
-    updateStockInfo();
-    updateReturnBadge();
-    updateRecentBorrow();
-}
-
-function updateStockInfo() {
-    var borrowed = 0;
-    for (var i = 0; i < data.items.length; i++) {
-        if (data.items[i].borrowed > 0) borrowed++;
-    }
-    var info = data.items.length + ' 种物品';
-    if (borrowed > 0) info += ' · ' + borrowed + ' 种借出中';
-    document.getElementById('stockInfo').textContent = info;
-}
-
-function updateReturnBadge() {
-    var activeSessions = data.sessions.filter(function(s) { return !s.returned; });
+    var borrowed = items.filter(i => i.borrowed > 0).length;
+    document.getElementById('stockInfo').textContent = items.length + ' 种物品' + (borrowed > 0 ? ' · ' + borrowed + ' 种借出中' : '');
+    
+    var active = records.filter(r => r.status === 'borrowed');
     var badge = document.getElementById('returnBadge');
     var desc = document.getElementById('returnDesc');
-    if (activeSessions.length > 0) {
+    if (active.length > 0) {
         badge.style.display = 'block';
-        badge.textContent = activeSessions.length;
-        desc.textContent = activeSessions.length + ' 笔待归还';
+        badge.textContent = active.length;
+        desc.textContent = active.length + ' 笔待归还';
     } else {
         badge.style.display = 'none';
         desc.textContent = '登记物品归还';
     }
-}
-
-function updateRecentBorrow() {
+    
     var container = document.getElementById('recentBorrow');
-    var activeSessions = data.sessions.filter(function(s) { return !s.returned; });
-    
-    if (activeSessions.length === 0) {
+    if (active.length === 0) {
         container.style.display = 'none';
-        return;
+    } else {
+        var latest = active[0];
+        container.style.display = 'block';
+        container.innerHTML = '<div class="recent-borrow-card">' +
+            '<div class="avatar">' + latest.borrower.charAt(0) + '</div>' +
+            '<div class="info"><div class="name">' + latest.borrower + ' 借出中</div>' +
+            '<div class="items">' + latest.item_name + ' × ' + latest.quantity + '</div></div>' +
+            '<button class="action" onclick="quickReturn(' + latest.id + ')">归还</button></div>';
     }
-    
-    var latest = activeSessions[activeSessions.length - 1];
-    var itemNames = latest.items.map(function(it) { return it.item; }).join('、');
-    if (itemNames.length > 15) itemNames = itemNames.substring(0, 15) + '...';
-    
-    container.style.display = 'block';
-    container.innerHTML = '<div class="recent-borrow-card">' +
-        '<div class="avatar">' + latest.borrower.charAt(0) + '</div>' +
-        '<div class="info">' +
-        '<div class="name">' + latest.borrower + ' 借出中</div>' +
-        '<div class="items">' + itemNames + '</div>' +
-        '</div>' +
-        '<button class="action" onclick="quickReturn(' + (data.sessions.indexOf(latest)) + ')">归还</button>' +
-        '</div>';
 }
 
-function quickReturn(sessionIndex) {
-    returnAll(sessionIndex);
+async function quickReturn(id) {
+    showLoading();
+    var r = records.find(x => x.id === id);
+    if (r) {
+        await db.from('records').update({ status: 'returned', return_time: new Date().toISOString() }).eq('id', id);
+        var item = items.find(i => i.id === r.item_id);
+        if (item) {
+            item.borrowed = Math.max(0, item.borrowed - r.quantity);
+            await db.from('items').update({ borrowed: item.borrowed }).eq('id', item.id);
+        }
+    }
+    await loadData();
+    showToast('归还成功');
 }
 
-// ========== 借出功能 ==========
 function initBorrow() {
     currentBorrowItems = [];
     addBorrowItem();
@@ -629,568 +341,209 @@ function initBorrow() {
 }
 
 function showBorrowerList() {
-    var dropdown = document.getElementById('borrowerDropdown');
-    dropdown.classList.add('show');
+    document.getElementById('borrowerDropdown').classList.add('show');
     updateBorrowerDropdown();
 }
-
-function hideBorrowerList() {
-    var dropdown = document.getElementById('borrowerDropdown');
-    dropdown.classList.remove('show');
-}
-
-function filterBorrowerList() {
-    updateBorrowerDropdown();
-}
+function hideBorrowerList() { document.getElementById('borrowerDropdown').classList.remove('show'); }
+function filterBorrowerList() { updateBorrowerDropdown(); }
 
 function updateBorrowerDropdown() {
-    var input = document.getElementById('borrowerInput');
-    var dropdown = document.getElementById('borrowerDropdown');
-    var keyword = input.value.toLowerCase().trim();
-    
-    var filtered = data.borrowers.filter(function(name) {
-        return name.toLowerCase().indexOf(keyword) !== -1;
-    });
-    
-    var html = '';
-    if (filtered.length > 0) {
-        for (var i = 0; i < filtered.length; i++) {
-            html += '<div class="dropdown-item" onclick="selectBorrower(\'' + filtered[i] + '\')">' + filtered[i] + '</div>';
-        }
-    } else if (keyword) {
-        html += '<div class="dropdown-empty">按回车确认新姓名</div>';
-    } else {
-        html += '<div class="dropdown-empty">输入姓名或从列表选择</div>';
-    }
-    dropdown.innerHTML = html;
+    var keyword = document.getElementById('borrowerInput').value.toLowerCase().trim();
+    var filtered = borrowers.filter(n => n.toLowerCase().includes(keyword));
+    var html = filtered.length > 0 ? filtered.map(n => '<div class="dropdown-item" onclick="selectBorrower(\'' + n + '\')">' + n + '</div>').join('') :
+        keyword ? '<div class="dropdown-empty">按回车确认新姓名</div>' : '<div class="dropdown-empty">输入姓名或从列表选择</div>';
+    document.getElementById('borrowerDropdown').innerHTML = html;
 }
 
 function selectBorrower(name) {
-    var input = document.getElementById('borrowerInput');
-    input.value = name;
+    document.getElementById('borrowerInput').value = name;
     hideBorrowerList();
 }
 
-// 点击其他地方关闭下拉
 document.addEventListener('click', function(e) {
-    var container = document.getElementById('borrowerSearchSelect');
-    if (container && !container.contains(e.target)) {
-        hideBorrowerList();
-    }
+    if (!document.getElementById('borrowerSearchSelect').contains(e.target)) hideBorrowerList();
 });
 
 function addBorrowItem() {
-    // 获取当前可用的物品
-    var otherSelected = [];
-    for (var k = 0; k < currentBorrowItems.length; k++) {
-        if (currentBorrowItems[k].item) {
-            otherSelected.push(currentBorrowItems[k].item);
-        }
-    }
-    
-    var availableItems = data.items.filter(function(item) {
-        return item.total - item.borrowed > 0 && otherSelected.indexOf(item.name) === -1;
-    });
-    
-    var defaultItem = availableItems.length > 0 ? availableItems[0].name : '';
-    currentBorrowItems.push({ item: defaultItem, qty: 1 });
+    var selected = currentBorrowItems.filter(b => b.item).map(b => b.item.id);
+    var available = items.filter(i => i.total - i.borrowed > 0 && !selected.includes(i.id));
+    currentBorrowItems.push({ item: available[0] || null, qty: 1 });
     renderBorrowItems();
 }
 
-function removeBorrowItem(index) {
+function removeBorrowItem(idx) {
     if (currentBorrowItems.length > 1) {
-        currentBorrowItems.splice(index, 1);
+        currentBorrowItems.splice(idx, 1);
         renderBorrowItems();
     }
 }
 
 function renderBorrowItems() {
     var container = document.getElementById('borrowItems');
-    var allItems = data.items.filter(function(item) {
-        return item.total - item.borrowed > 0;
-    });
-    
-    if (allItems.length === 0) {
-        container.innerHTML = '<div class="empty">所有物品已借出</div>';
-        return;
-    }
+    var available = items.filter(i => i.total - i.borrowed > 0);
+    if (available.length === 0) { container.innerHTML = '<div class="empty">所有物品已借出</div>'; return; }
     
     var html = '';
-    for (var i = 0; i < currentBorrowItems.length; i++) {
-        var bi = currentBorrowItems[i];
-        
-        // 收集其他行已选的物品（不包括当前行）
-        var otherSelected = [];
-        for (var k = 0; k < currentBorrowItems.length; k++) {
-            if (k !== i && currentBorrowItems[k].item) {
-                otherSelected.push(currentBorrowItems[k].item);
-            }
-        }
-        
-        // 当前行的可用物品：排除其他行已选的
-        var availableItems = allItems.filter(function(item) {
-            return otherSelected.indexOf(item.name) === -1;
-        });
-        
-        // 如果没有可选项，删除当前行
-        if (availableItems.length === 0 && currentBorrowItems.length > 1) {
-            currentBorrowItems.splice(i, 1);
-            renderBorrowItems();
-            return;
-        }
-        
-        // 找到当前选中的物品信息
-        var selectedItem = availableItems.find(function(it) { return it.name === bi.item; });
-        var defaultMax = selectedItem ? (selectedItem.total - selectedItem.borrowed) : 10;
-        var displayValue = bi.item ? bi.item + ' (可借' + defaultMax + ')' : '';
-        
-        var removeBtn = currentBorrowItems.length > 1 ? '<button class="remove-btn" onclick="removeBorrowItem(' + i + ')">×</button>' : '';
-        
-        html += '<div class="borrow-item" id="borrowRow' + i + '">' +
-            '<div class="search-select">' +
-            '<input type="text" id="borrowItemInput' + i + '" value="' + displayValue + '" placeholder="输入或选择物品" autocomplete="off" oninput="filterItemList(' + i + ')" onfocus="showItemList(' + i + ')">' +
-            '<span class="dropdown-icon">▼</span>' +
-            '<div class="dropdown-list" id="itemDropdown' + i + '"></div>' +
-            '</div>' +
-            '<input type="number" id="borrowQty' + i + '" value="' + Math.min(bi.qty, defaultMax) + '" min="1" max="' + defaultMax + '" onchange="currentBorrowItems[' + i + '].qty = parseInt(this.value) || 1">' +
-            removeBtn +
-            '</div>';
-    }
+    currentBorrowItems.forEach((bi, i) => {
+        var sel = currentBorrowItems.filter((b, k) => k !== i && b.item).map(b => b.item.id);
+        var opts = available.filter(it => !sel.includes(it.id));
+        var max = bi.item ? bi.item.total - bi.item.borrowed : 10;
+        var val = bi.item ? bi.item.name + ' (可借' + max + ')' : '';
+        var rmv = currentBorrowItems.length > 1 ? '<button class="remove-btn" onclick="removeBorrowItem(' + i + ')">×</button>' : '';
+        html += '<div class="borrow-item"><div class="search-select"><input type="text" value="' + val + '" placeholder="选择物品" onfocus="showItemDd(' + i + ')" onclick="showItemDd(' + i + ')"><span class="dropdown-icon">▼</span><div class="dropdown-list" id="dd' + i + '"></div></div><input type="number" value="' + (bi.qty || 1) + '" min="1" max="' + max + '" onchange="currentBorrowItems[' + i + '].qty=+this.value">' + rmv + '</div>';
+    });
     container.innerHTML = html;
-    
-    // 初始化下拉列表
-    for (var i = 0; i < currentBorrowItems.length; i++) {
-        updateItemDropdown(i);
-    }
+    currentBorrowItems.forEach((bi, i) => updateItemDd(i));
 }
 
-function showItemList(index) {
-    // 先关闭其他下拉
-    for (var i = 0; i < currentBorrowItems.length; i++) {
-        var dd = document.getElementById('itemDropdown' + i);
-        if (dd && i !== index) dd.classList.remove('show');
-    }
-    var dropdown = document.getElementById('itemDropdown' + index);
-    if (dropdown) dropdown.classList.add('show');
-    updateItemDropdown(index);
+function showItemDd(i) {
+    document.querySelectorAll('[id^="dd"]').forEach(d => d.classList.remove('show'));
+    document.getElementById('dd' + i).classList.add('show');
+    updateItemDd(i);
 }
 
-function hideItemList(index) {
-    var dropdown = document.getElementById('itemDropdown' + index);
-    if (dropdown) dropdown.classList.remove('show');
+function updateItemDd(i) {
+    var sel = currentBorrowItems.filter((b, k) => k !== i && b.item).map(b => b.item.id);
+    var opts = items.filter(it => it.total - it.borrowed > 0 && !sel.includes(it.id));
+    var html = opts.map(it => '<div class="dropdown-item" onclick="selectItem(' + i + ',' + it.id + ',\'' + it.name + '\',' + (it.total - it.borrowed) + ')">' + it.name + ' (可借' + (it.total - it.borrowed) + ')</div>').join('') || '<div class="dropdown-empty">无可用物品</div>';
+    var dd = document.getElementById('dd' + i);
+    if (dd) dd.innerHTML = html;
 }
 
-function filterItemList(index) {
-    updateItemDropdown(index);
+function selectItem(i, id, name, max) {
+    currentBorrowItems[i].item = items.find(it => it.id === id);
+    currentBorrowItems[i].qty = 1;
+    renderBorrowItems();
 }
 
-function updateItemDropdown(index) {
-    var dropdown = document.getElementById('itemDropdown' + index);
-    var input = document.getElementById('borrowItemInput' + index);
-    if (!dropdown || !input) return;
-    
-    var keyword = input.value.toLowerCase().replace(/\s*\(可借\d+\)$/, '').trim();
-    
-    // 收集其他行已选的物品
-    var otherSelected = [];
-    for (var k = 0; k < currentBorrowItems.length; k++) {
-        if (k !== index && currentBorrowItems[k].item) {
-            otherSelected.push(currentBorrowItems[k].item);
-        }
-    }
-    
-    // 获取可用物品
-    var availableItems = data.items.filter(function(item) {
-        var available = item.total - item.borrowed;
-        var notSelected = otherSelected.indexOf(item.name) === -1;
-        var matchKeyword = item.name.toLowerCase().indexOf(keyword) !== -1;
-        return available > 0 && notSelected && matchKeyword;
-    });
-    
-    var html = '';
-    if (availableItems.length > 0) {
-        for (var i = 0; i < availableItems.length; i++) {
-            var item = availableItems[i];
-            var available = item.total - item.borrowed;
-            html += '<div class="dropdown-item" onclick="selectItem(' + index + ', \'' + item.name + '\', ' + available + ')">' + item.name + ' <span style="color:#888;font-size:0.85rem;">(可借' + available + ')</span></div>';
-        }
-    } else {
-        html += '<div class="dropdown-empty">没有匹配的物品</div>';
-    }
-    dropdown.innerHTML = html;
-}
-
-function selectItem(index, itemName, maxQty) {
-    currentBorrowItems[index].item = itemName;
-    currentBorrowItems[index].qty = 1;
-    
-    var input = document.getElementById('borrowItemInput' + index);
-    if (input) input.value = itemName + ' (可借' + maxQty + ')';
-    
-    var qtyInput = document.getElementById('borrowQty' + index);
-    if (qtyInput) {
-        qtyInput.max = maxQty;
-        qtyInput.value = 1;
-    }
-    
-    hideItemList(index);
-    
-    // 更新其他行的下拉选项
-    for (var i = 0; i < currentBorrowItems.length; i++) {
-        if (i !== index) updateItemDropdown(i);
-    }
-}
-
-// 点击其他地方关闭下拉
 document.addEventListener('click', function(e) {
-    // 检查是否点击的是物品下拉相关元素
-    var isItemDropdown = false;
-    for (var i = 0; i < currentBorrowItems.length; i++) {
-        var row = document.getElementById('borrowRow' + i);
-        if (row && row.contains(e.target)) {
-            isItemDropdown = true;
-            break;
-        }
-    }
-    
-    // 如果不是点击物品下拉区域，关闭所有物品下拉
-    if (!isItemDropdown) {
-        for (var i = 0; i < 20; i++) {
-            var dd = document.getElementById('itemDropdown' + i);
-            if (dd) dd.classList.remove('show');
-        }
+    if (!e.target.closest('.borrow-item')) {
+        document.querySelectorAll('[id^="dd"]').forEach(d => d.classList.remove('show'));
     }
 });
 
-function doBorrow() {
+async function doBorrow() {
     var borrower = document.getElementById('borrowerInput').value.trim();
     if (!borrower) { showToast('请输入姓名'); return; }
+    var valid = currentBorrowItems.filter(b => b.item && b.qty > 0);
+    if (!valid.length) { showToast('请选择物品'); return; }
     
-    var validItems = currentBorrowItems.filter(function(bi) {
-        return bi.item && bi.qty > 0;
-    });
-    if (validItems.length === 0) { showToast('请选择物品'); return; }
-    
-    for (var i = 0; i < validItems.length; i++) {
-        var bi = validItems[i];
-        var itemData = data.items.find(function(it) { return it.name === bi.item; });
-        var available = itemData.total - itemData.borrowed;
-        if (bi.qty > available) {
-            showToast(bi.item + ' 库存不足');
-            return;
-        }
-    }
-    
-    var now = new Date();
-    var timeStr = now.toLocaleString('zh-CN');
-    var sessionId = Date.now();
-    
-    var session = {
-        id: sessionId,
-        borrower: borrower,
-        borrowTime: timeStr,
-        items: [],
-        returned: false,
-        returnTime: null
-    };
-    
-    for (var i = 0; i < validItems.length; i++) {
-        var bi = validItems[i];
-        var itemData = data.items.find(function(item) { return item.name === bi.item; });
-        itemData.borrowed += bi.qty;
-        
-        session.items.push({ item: bi.item, qty: bi.qty });
-        
-        data.records.push({
-            sessionId: sessionId,
-            item: bi.item,
-            borrower: borrower,
-            qty: bi.qty,
-            borrowTime: timeStr,
-            returned: false,
-            returnTime: null
+    showLoading();
+    for (var bi of valid) {
+        await db.from('records').insert({
+            item_id: bi.item.id, item_name: bi.item.name, borrower, quantity: bi.qty,
+            borrow_time: new Date().toISOString(), status: 'borrowed'
         });
+        bi.item.borrowed += bi.qty;
+        await db.from('items').update({ borrowed: bi.item.borrowed }).eq('id', bi.item.id);
     }
-    
-    data.sessions.push(session);
-    
-    if (data.borrowers.indexOf(borrower) === -1) {
-        data.borrowers.push(borrower);
-    }
-    
-    saveData();
+    if (!borrowers.includes(borrower)) borrowers.push(borrower);
+    await loadData();
     document.getElementById('borrowerInput').value = '';
-    hideBorrowerList();
-    currentBorrowItems = [];
     showPage('home');
     showToast('借出成功');
 }
 
-// ========== 归还功能 ==========
-function initReturn() {
+async function initReturn() {
     var container = document.getElementById('returnList');
-    var activeSessions = data.sessions.filter(function(s) { return !s.returned; });
+    var active = records.filter(r => r.status === 'borrowed');
+    if (!active.length) { container.innerHTML = '<div class="card"><div class="empty">暂无借出物品</div></div>'; return; }
     
-    if (activeSessions.length === 0) {
-        container.innerHTML = '<div class="card"><div class="empty">暂无借出物品</div></div>';
-        return;
-    }
+    var groups = {};
+    active.forEach(r => { groups[r.borrower] = groups[r.borrower] || []; groups[r.borrower].push(r); });
     
     var html = '';
-    for (var i = 0; i < activeSessions.length; i++) {
-        var session = activeSessions[i];
-        var sessionIndex = data.sessions.indexOf(session);
-        
-        html += '<div class="return-group">' +
-            '<div class="return-group-header">' +
-            '<div class="return-group-header-left">' +
-            '<span class="name">' + session.borrower + '</span>' +
-            '<span class="time">' + session.borrowTime + '</span>' +
-            '</div>' +
-            '<button class="btn btn-success btn-small" onclick="returnAll(' + sessionIndex + ')">全部归还</button>' +
-            '</div>' +
-            '<div class="return-group-body">';
-        
-        for (var j = 0; j < session.items.length; j++) {
-            var si = session.items[j];
-            // 检查该物品是否已单独归还
-            var isReturned = si.returned === true;
-            if (isReturned) {
-                html += '<div class="return-item" style="opacity:0.5;">' +
-                    '<span class="return-item-name" style="text-decoration:line-through;color:#999;">' + si.item + ' × ' + si.qty + '</span>' +
-                    '<span style="color:#4caf50;font-size:0.8rem;">已归还</span>' +
-                    '</div>';
-            } else {
-                html += '<div class="return-item">' +
-                    '<span class="return-item-name">' + si.item + ' × ' + si.qty + '</span>' +
-                    '<button class="btn btn-success btn-small" onclick="returnSingleItem(' + sessionIndex + ', ' + j + ')">归还</button>' +
-                    '</div>';
-            }
-        }
-        
+    for (var b in groups) {
+        var g = groups[b];
+        html += '<div class="return-group"><div class="return-group-header"><div class="return-group-header-left"><span class="name">' + b + '</span><span class="time">' + g.length + ' 件物品</span></div><button class="btn btn-success btn-small" onclick="returnAll(\'' + b + '\')">全部归还</button></div><div class="return-group-body">';
+        g.forEach(r => { html += '<div class="return-item"><span class="return-item-name">' + r.item_name + ' × ' + r.quantity + '</span><button class="btn btn-success btn-small" onclick="returnOne(' + r.id + ')">归还</button></div>'; });
         html += '</div></div>';
     }
     container.innerHTML = html;
 }
 
-function returnSingleItem(sessionIndex, itemIndex) {
-    var session = data.sessions[sessionIndex];
-    var si = session.items[itemIndex];
-    var now = new Date().toLocaleString('zh-CN');
-    
-    // 更新库存
-    var itemData = data.items.find(function(it) { return it.name === si.item; });
-    if (itemData) {
-        itemData.borrowed -= si.qty;
+async function returnOne(id) {
+    showLoading();
+    var r = records.find(x => x.id === id);
+    if (r) {
+        await db.from('records').update({ status: 'returned', return_time: new Date().toISOString() }).eq('id', id);
+        var it = items.find(i => i.id === r.item_id);
+        if (it) { it.borrowed = Math.max(0, it.borrowed - r.quantity); await db.from('items').update({ borrowed: it.borrowed }).eq('id', it.id); }
     }
-    
-    // 标记该物品已归还
-    si.returned = true;
-    si.returnTime = now;
-    
-    // 更新records
-    for (var i = 0; i < data.records.length; i++) {
-        var r = data.records[i];
-        if (r.sessionId === session.id && r.item === si.item && !r.returned) {
-            r.returned = true;
-            r.returnTime = now;
-        }
-    }
-    
-    // 检查是否所有物品都已归还
-    var allReturned = session.items.every(function(it) { return it.returned === true; });
-    if (allReturned) {
-        session.returned = true;
-        session.returnTime = now;
-    }
-    
-    saveData();
+    await loadData();
     showToast('归还成功');
     initReturn();
 }
 
-function returnAll(sessionIndex) {
-    var session = data.sessions[sessionIndex];
-    var now = new Date().toLocaleString('zh-CN');
-    
-    for (var i = 0; i < session.items.length; i++) {
-        var si = session.items[i];
-        // 只归还未归还的物品
-        if (!si.returned) {
-            var itemData = data.items.find(function(it) { return it.name === si.item; });
-            if (itemData) {
-                itemData.borrowed -= si.qty;
-            }
-            si.returned = true;
-            si.returnTime = now;
-        }
+async function returnAll(b) {
+    showLoading();
+    var arr = records.filter(r => r.borrower === b && r.status === 'borrowed');
+    for (var r of arr) {
+        await db.from('records').update({ status: 'returned', return_time: new Date().toISOString() }).eq('id', r.id);
+        var it = items.find(i => i.id === r.item_id);
+        if (it) { it.borrowed = Math.max(0, it.borrowed - r.quantity); await db.from('items').update({ borrowed: it.borrowed }).eq('id', it.id); }
     }
-    
-    session.returned = true;
-    session.returnTime = now;
-    
-    for (var i = 0; i < data.records.length; i++) {
-        var r = data.records[i];
-        if (r.sessionId === session.id && !r.returned) {
-            r.returned = true;
-            r.returnTime = now;
-        }
-    }
-    
-    saveData();
+    await loadData();
     showToast('归还成功');
     showPage('home');
 }
 
-// ========== 历史记录 ==========
-function initHistory() {
-    filterHistory();
-}
+function initHistory() { filterHistory(); }
 
 function filterHistory() {
-    var keyword = document.getElementById('searchInput').value.toLowerCase().trim();
+    var kw = document.getElementById('searchInput').value.toLowerCase().trim();
+    var filtered = kw ? records.filter(r => r.borrower.toLowerCase().includes(kw) || r.item_name.toLowerCase().includes(kw)) : records;
     var container = document.getElementById('historyList');
-    
-    if (data.sessions.length === 0) {
-        container.innerHTML = '<div class="card"><div class="empty">暂无记录</div></div>';
-        return;
-    }
-    
-    var filtered = data.sessions;
-    if (keyword) {
-        filtered = data.sessions.filter(function(s) {
-            var matchBorrower = s.borrower.toLowerCase().indexOf(keyword) !== -1;
-            var matchItem = s.items.some(function(it) {
-                return it.item.toLowerCase().indexOf(keyword) !== -1;
-            });
-            return matchBorrower || matchItem;
-        });
-    }
-    
-    if (filtered.length === 0) {
-        container.innerHTML = '<div class="card"><div class="empty">未找到匹配记录</div></div>';
-        return;
-    }
+    if (!filtered.length) { container.innerHTML = '<div class="card"><div class="empty">' + (kw ? '未找到匹配记录' : '暂无记录') + '</div></div>'; return; }
     
     var html = '';
-    for (var i = filtered.length - 1; i >= 0; i--) {
-        var session = filtered[i];
-        var statusClass = session.returned ? 'status-returned' : 'status-borrowed';
-        var statusText = session.returned ? '已归还' : '借出中';
-        
-        html += '<div class="history-card">' +
-            '<div class="history-header">' +
-            '<div class="history-left">' +
-            '<div class="history-avatar">' + session.borrower.charAt(0) + '</div>' +
-            '<div>' +
-            '<div class="history-borrower">' + session.borrower + '</div>' +
-            '<div class="history-time">' + session.borrowTime + '</div>' +
-            '</div></div>' +
-            '<span class="status-badge ' + statusClass + '">' + statusText + '</span>' +
-            '</div>' +
-            '<div class="history-items">';
-        
-        for (var j = 0; j < session.items.length; j++) {
-            var item = session.items[j];
-            var returnedClass = session.returned ? 'returned' : '';
-            html += '<div class="history-item ' + returnedClass + '">' +
-                '<span class="item-name">' + item.item + '</span>' +
-                '<span class="item-qty">×' + item.qty + '</span>' +
-                '</div>';
-        }
-        
-        if (session.returned && session.returnTime) {
-            html += '<div style="padding:10px 0;font-size:0.75rem;color:#388e3c;border-top:1px solid #f0f0f0;">✓ 归还于 ' + session.returnTime + '</div>';
-        }
-        
-        html += '</div></div>';
-    }
+    filtered.forEach(r => {
+        var bt = new Date(r.borrow_time).toLocaleString('zh-CN');
+        var rt = r.return_time ? new Date(r.return_time).toLocaleString('zh-CN') : '';
+        html += '<div class="history-card"><div class="history-header"><div class="history-left"><div class="history-avatar">' + r.borrower.charAt(0) + '</div><div><div class="history-borrower">' + r.borrower + '</div><div class="history-time">' + bt + '</div></div></div><span class="status-badge ' + (r.status === 'returned' ? 'status-returned' : 'status-borrowed') + '">' + (r.status === 'returned' ? '已归还' : '借出中') + '</span></div><div class="history-items"><div class="history-item ' + (r.status === 'returned' ? 'returned' : '') + '"><span class="item-name">' + r.item_name + '</span><span class="item-qty">×' + r.quantity + '</span></div>' + (r.status === 'returned' && rt ? '<div style="padding:10px 0;font-size:0.75rem;color:#388e3c;border-top:1px solid #f0f0f0;">✓ 归还于 ' + rt + '</div>' : '') + '</div></div>';
+    });
     container.innerHTML = html;
 }
 
-// ========== 库存管理 ==========
 function initInventory() {
     var container = document.getElementById('inventoryList');
-    var html = '';
-    
-    for (var i = 0; i < data.items.length; i++) {
-        var item = data.items[i];
-        var stock = item.total - item.borrowed;
-        var lowStockClass = stock <= 1 ? 'low-stock' : '';
-        var borrowedInfo = item.borrowed > 0 ? '<span class="borrowed-info"> · 已借' + item.borrowed + '</span>' : '';
-        
-        html += '<div class="inventory-item" onclick="showDeleteModal(' + i + ')">' +
-            '<div>' +
-            '<div class="inventory-name">' + item.name + '</div>' +
-            '<div class="inventory-stock">共 ' + item.total + ' 件' + borrowedInfo + '</div>' +
-            '</div>' +
-            '<div class="inventory-right">' +
-            '<div class="count ' + lowStockClass + '">' + stock + '</div>' +
-            '<div class="unit">可借</div>' +
-            '</div>' +
-            '</div>';
-    }
+    var html = items.map((it, i) => {
+        var stock = it.total - it.borrowed;
+        return '<div class="inventory-item" onclick="showDeleteModal(' + i + ')"><div><div class="inventory-name">' + it.name + '</div><div class="inventory-stock">共 ' + it.total + ' 件' + (it.borrowed > 0 ? '<span class="borrowed-info"> · 已借' + it.borrowed + '</span>' : '') + '</div></div><div class="inventory-right"><div class="count ' + (stock <= 1 ? 'low-stock' : '') + '">' + stock + '</div><div class="unit">可借</div></div></div>';
+    }).join('');
     container.innerHTML = html;
 }
 
-function showAddItemModal() {
-    document.getElementById('addItemModal').classList.add('active');
-    document.getElementById('newItemName').focus();
-}
+function showAddItemModal() { document.getElementById('addItemModal').classList.add('active'); document.getElementById('newItemName').focus(); }
+function hideAddItemModal() { document.getElementById('addItemModal').classList.remove('active'); document.getElementById('newItemName').value = ''; document.getElementById('newItemQty').value = '1'; }
 
-function hideAddItemModal() {
-    document.getElementById('addItemModal').classList.remove('active');
-    document.getElementById('newItemName').value = '';
-    document.getElementById('newItemQty').value = '1';
-}
-
-function addNewItem() {
+async function addNewItem() {
     var name = document.getElementById('newItemName').value.trim();
     var qty = parseInt(document.getElementById('newItemQty').value) || 1;
-    
     if (!name) { showToast('请输入物品名称'); return; }
-    var exists = data.items.find(function(i) { return i.name === name; });
-    if (exists) { showToast('该物品已存在'); return; }
-    
-    data.items.push({ name: name, total: qty, borrowed: 0 });
-    saveData();
-    updateStockInfo();
+    if (items.find(i => i.name === name)) { showToast('该物品已存在'); return; }
+    showLoading();
+    await db.from('items').insert({ name, total: qty, borrowed: 0 });
+    await loadData();
     hideAddItemModal();
-    initInventory();
     showToast('添加成功');
 }
 
-function showDeleteModal(index) {
-    deleteTargetIndex = index;
+function showDeleteModal(i) {
     document.getElementById('deleteModal').classList.add('active');
-    document.getElementById('confirmDeleteBtn').onclick = function() {
-        deleteItem(deleteTargetIndex);
+    document.getElementById('confirmDeleteBtn').onclick = async function() {
+        var it = items[i];
+        if (it.borrowed > 0) { showToast('该物品还有借出未归还'); hideDeleteModal(); return; }
+        showLoading();
+        await db.from('items').delete().eq('id', it.id);
+        await loadData();
+        hideDeleteModal();
+        showToast('已删除');
     };
 }
+function hideDeleteModal() { document.getElementById('deleteModal').classList.remove('active'); }
 
-function hideDeleteModal() {
-    document.getElementById('deleteModal').classList.remove('active');
-    deleteTargetIndex = -1;
-}
-
-function deleteItem(index) {
-    var item = data.items[index];
-    if (item.borrowed > 0) {
-        showToast('该物品还有借出未归还');
-        hideDeleteModal();
-        return;
-    }
-    data.items.splice(index, 1);
-    saveData();
-    updateStockInfo();
-    hideDeleteModal();
-    initInventory();
-    showToast('已删除');
-}
-
-// 初始化
 loadData();
-updateHome();
 </script>
 </body>
 </html>
