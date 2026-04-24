@@ -525,6 +525,7 @@ async function addNewItem() {
     showLoading();
     await db.from('items').insert({ name, total: qty, borrowed: 0 });
     await loadData();
+    initInventory();
     hideAddItemModal();
     showToast('添加成功');
 }
