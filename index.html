@@ -522,10 +522,12 @@ async function addNewItem() {
     var qty = parseInt(document.getElementById('newItemQty').value) || 1;
     if (!name) { showToast('请输入物品名称'); return; }
     if (items.find(i => i.name === name)) { showToast('该物品已存在'); return; }
-    showLoading();
-    await db.from('items').insert({ name, total: qty, borrowed: 0 });
-    await loadData();
-    initInventory();
+    
+    const { data, error } = await db.from('items').insert({ name, total: qty, borrowed: 0 }).select();
+    if (!error && data && data[0]) {
+        items.push(data[0]);
+        initInventory();
+    }
     hideAddItemModal();
     showToast('添加成功');
 }
@@ -535,9 +537,9 @@ function showDeleteModal(i) {
     document.getElementById('confirmDeleteBtn').onclick = async function() {
         var it = items[i];
         if (it.borrowed > 0) { showToast('该物品还有借出未归还'); hideDeleteModal(); return; }
-        showLoading();
+        
         await db.from('items').delete().eq('id', it.id);
-        await loadData();
+        items.splice(i, 1);
         initInventory();
         hideDeleteModal();
         showToast('已删除');
