@@ -321,17 +321,25 @@ function updateHome() {
 
 async function quickReturn(id) {
     showLoading();
-    var r = records.find(x => x.id === id);
-    if (r) {
-        await db.from('records').update({ status: 'returned', return_time: new Date().toISOString() }).eq('id', id);
-        var item = items.find(i => i.id === r.item_id);
-        if (item) {
-            item.borrowed = Math.max(0, item.borrowed - r.quantity);
-            await db.from('items').update({ borrowed: item.borrowed }).eq('id', item.id);
+    try {
+        var r = records.find(x => x.id === id);
+        if (r) {
+            var { error: e1 } = await db.from('records').update({ status: 'returned', return_time: new Date().toISOString() }).eq('id', id);
+            if (e1) { showToast('归还失败'); hideLoading(); return; }
+            var item = items.find(i => i.id === r.item_id);
+            if (item) {
+                item.borrowed = Math.max(0, item.borrowed - r.quantity);
+                var { error: e2 } = await db.from('items').update({ borrowed: item.borrowed }).eq('id', item.id);
+                if (e2) { showToast('库存更新失败'); hideLoading(); return; }
+            }
         }
+        await loadData();
+        showToast('归还成功');
+    } catch(e) {
+        console.error('归还异常:', e);
+        showToast('网络异常，请重试');
+        hideLoading();
     }
-    await loadData();
-    showToast('归还成功');
 }
 
 function initBorrow() {
@@ -364,6 +372,14 @@ document.addEventListener('click', function(e) {
     if (!document.getElementById('borrowerSearchSelect').contains(e.target)) hideBorrowerList();
 });
 
+function clampBorrowQty(idx, maxAvail, el) {
+    var v = parseInt(el.value) || 0;
+    if (v < 1) { v = 1; }
+    if (v > maxAvail) { v = maxAvail; showToast('最多可借' + maxAvail + '件'); }
+    el.value = v;
+    currentBorrowItems[idx].qty = v;
+}
+
 function addBorrowItem() {
     var selected = currentBorrowItems.filter(b => b.item).map(b => b.item.id);
     var available = items.filter(i => i.total - i.borrowed > 0 && !selected.includes(i.id));
@@ -390,7 +406,7 @@ function renderBorrowItems() {
         var max = bi.item ? bi.item.total - bi.item.borrowed : 10;
         var val = bi.item ? bi.item.name + ' (可借' + max + ')' : '';
         var rmv = currentBorrowItems.length > 1 ? '<button class="remove-btn" onclick="removeBorrowItem(' + i + ')">×</button>' : '';
-        html += '<div class="borrow-item"><div class="search-select"><input type="text" value="' + val + '" placeholder="选择物品" onfocus="showItemDd(' + i + ')" onclick="showItemDd(' + i + ')"><span class="dropdown-icon">▼</span><div class="dropdown-list" id="dd' + i + '"></div></div><input type="number" value="' + (bi.qty || 1) + '" min="1" max="' + max + '" onchange="currentBorrowItems[' + i + '].qty=+this.value">' + rmv + '</div>';
+        html += '<div class="borrow-item"><div class="search-select"><input type="text" value="' + val + '" placeholder="选择物品" onfocus="showItemDd(' + i + ')" onclick="showItemDd(' + i + ')"><span class="dropdown-icon">▼</span><div class="dropdown-list" id="dd' + i + '"></div></div><input type="number" value="' + (bi.qty || 1) + '" min="1" max="' + max + '" oninput="clampBorrowQty(' + i + ',' + max + ',this)" onchange="clampBorrowQty(' + i + ',' + max + ',this)">' + rmv + '</div>';
     });
     container.innerHTML = html;
     currentBorrowItems.forEach((bi, i) => updateItemDd(i));
@@ -429,19 +445,34 @@ async function doBorrow() {
     if (!valid.length) { showToast('请选择物品'); return; }
     
     showLoading();
-    for (var bi of valid) {
-        await db.from('records').insert({
-            item_id: bi.item.id, item_name: bi.item.name, borrower, quantity: bi.qty,
-            borrow_time: new Date().toISOString(), status: 'borrowed'
-        });
-        bi.item.borrowed += bi.qty;
-        await db.from('items').update({ borrowed: bi.item.borrowed }).eq('id', bi.item.id);
+    try {
+        for (var bi of valid) {
+            // 最终校验：确保借出数量不超过可借数量
+            var canBorrow = bi.item.total - bi.item.borrowed;
+            if (bi.qty > canBorrow) {
+                showToast(bi.item.name + '最多可借' + canBorrow + '件');
+                hideLoading();
+                return;
+            }
+            var { error: e1 } = await db.from('records').insert({
+                item_id: bi.item.id, item_name: bi.item.name, borrower, quantity: bi.qty,
+                borrow_time: new Date().toISOString(), status: 'borrowed'
+            });
+            if (e1) { showToast('借出失败: ' + (e1.message || '数据库错误')); hideLoading(); return; }
+            bi.item.borrowed += bi.qty;
+            var { error: e2 } = await db.from('items').update({ borrowed: bi.item.borrowed }).eq('id', bi.item.id);
+            if (e2) { showToast('库存更新失败'); hideLoading(); return; }
+        }
+        if (!borrowers.includes(borrower)) borrowers.push(borrower);
+        await loadData();
+        document.getElementById('borrowerInput').value = '';
+        showPage('home');
+        showToast('借出成功');
+    } catch(e) {
+        console.error('借出异常:', e);
+        showToast('网络异常，请重试');
+        hideLoading();
     }
-    if (!borrowers.includes(borrower)) borrowers.push(borrower);
-    await loadData();
-    document.getElementById('borrowerInput').value = '';
-    showPage('home');
-    showToast('借出成功');
 }
 
 async function initReturn() {
@@ -464,28 +495,42 @@ async function initReturn() {
 
 async function returnOne(id) {
     showLoading();
-    var r = records.find(x => x.id === id);
-    if (r) {
-        await db.from('records').update({ status: 'returned', return_time: new Date().toISOString() }).eq('id', id);
-        var it = items.find(i => i.id === r.item_id);
-        if (it) { it.borrowed = Math.max(0, it.borrowed - r.quantity); await db.from('items').update({ borrowed: it.borrowed }).eq('id', it.id); }
+    try {
+        var r = records.find(x => x.id === id);
+        if (r) {
+            var { error: e1 } = await db.from('records').update({ status: 'returned', return_time: new Date().toISOString() }).eq('id', id);
+            if (e1) { showToast('归还失败'); hideLoading(); return; }
+            var it = items.find(i => i.id === r.item_id);
+            if (it) { it.borrowed = Math.max(0, it.borrowed - r.quantity); var { error: e2 } = await db.from('items').update({ borrowed: it.borrowed }).eq('id', it.id); if (e2) { showToast('库存更新失败'); hideLoading(); return; } }
+        }
+        await loadData();
+        showToast('归还成功');
+        initReturn();
+    } catch(e) {
+        console.error('归还异常:', e);
+        showToast('网络异常，请重试');
+        hideLoading();
     }
-    await loadData();
-    showToast('归还成功');
-    initReturn();
 }
 
 async function returnAll(b) {
     showLoading();
-    var arr = records.filter(r => r.borrower === b && r.status === 'borrowed');
-    for (var r of arr) {
-        await db.from('records').update({ status: 'returned', return_time: new Date().toISOString() }).eq('id', r.id);
-        var it = items.find(i => i.id === r.item_id);
-        if (it) { it.borrowed = Math.max(0, it.borrowed - r.quantity); await db.from('items').update({ borrowed: it.borrowed }).eq('id', it.id); }
+    try {
+        var arr = records.filter(r => r.borrower === b && r.status === 'borrowed');
+        for (var r of arr) {
+            var { error: e1 } = await db.from('records').update({ status: 'returned', return_time: new Date().toISOString() }).eq('id', r.id);
+            if (e1) { showToast('归还失败'); hideLoading(); return; }
+            var it = items.find(i => i.id === r.item_id);
+            if (it) { it.borrowed = Math.max(0, it.borrowed - r.quantity); var { error: e2 } = await db.from('items').update({ borrowed: it.borrowed }).eq('id', it.id); if (e2) { showToast('库存更新失败'); hideLoading(); return; } }
+        }
+        await loadData();
+        showToast('归还成功');
+        showPage('home');
+    } catch(e) {
+        console.error('归还异常:', e);
+        showToast('网络异常，请重试');
+        hideLoading();
     }
-    await loadData();
-    showToast('归还成功');
-    showPage('home');
 }
 
 function initHistory() { filterHistory(); }
@@ -523,22 +568,43 @@ async function addNewItem() {
     if (!name) { showToast('请输入物品名称'); return; }
     if (items.find(i => i.name === name)) { showToast('该物品已存在'); return; }
     
-    const { data, error } = await db.from('items').insert({ name, total: qty, borrowed: 0 }).select();
-    if (error) {
-        showToast('添加失败');
-        return;
+    // 先在本地数组中临时添加（乐观更新）
+    var tempItem = { id: 'temp_' + Date.now(), name: name, total: qty, borrowed: 0 };
+    
+    try {
+        const { data, error } = await db.from('items').insert({ name: name, total: qty, borrowed: 0 }).select();
+        if (error) {
+            console.error('添加失败详情:', error);
+            // 如果是RLS权限问题，给出明确提示
+            if (error.code === '42501' || (error.message && error.message.includes('policy'))) {
+                showToast('权限不足，请检查数据库RLS策略');
+            } else if (error.code === '23505') {
+                showToast('该物品名称已存在');
+            } else {
+                showToast('添加失败: ' + (error.message || '未知错误'));
+            }
+            return;
+        }
+        // 添加到本地数组
+        if (data && data[0]) {
+            items.push(data[0]);
+        } else {
+            // 如果没返回数据，重新加载items确保同步
+            try {
+                const { data: itemsData } = await db.from('items').select('*');
+                items = itemsData || [];
+            } catch(e) {
+                // 重加载失败，用本地临时数据
+                items.push(tempItem);
+            }
+        }
+        initInventory();
+        hideAddItemModal();
+        showToast('添加成功');
+    } catch(e) {
+        console.error('添加异常:', e);
+        showToast('网络异常，请检查网络后重试');
     }
-    // 添加到本地数组
-    if (data && data[0]) {
-        items.push(data[0]);
-    } else {
-        // 如果没返回数据，重新加载items
-        const { data: itemsData } = await db.from('items').select('*');
-        items = itemsData || [];
-    }
-    initInventory();
-    hideAddItemModal();
-    showToast('添加成功');
 }
 
 function showDeleteModal(i) {
@@ -547,11 +613,21 @@ function showDeleteModal(i) {
         var it = items[i];
         if (it.borrowed > 0) { showToast('该物品还有借出未归还'); hideDeleteModal(); return; }
         
-        await db.from('items').delete().eq('id', it.id);
-        items.splice(i, 1);
-        initInventory();
-        hideDeleteModal();
-        showToast('已删除');
+        try {
+            const { error } = await db.from('items').delete().eq('id', it.id);
+            if (error) {
+                console.error('删除失败详情:', error);
+                showToast('删除失败: ' + (error.message || '未知错误'));
+                return;
+            }
+            items.splice(i, 1);
+            initInventory();
+            hideDeleteModal();
+            showToast('已删除');
+        } catch(e) {
+            console.error('删除异常:', e);
+            showToast('网络异常，请重试');
+        }
     };
 }
 function hideDeleteModal() { document.getElementById('deleteModal').classList.remove('active'); }
