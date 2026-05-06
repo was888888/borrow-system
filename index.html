@@ -406,7 +406,7 @@ function renderBorrowItems() {
         var max = bi.item ? bi.item.total - bi.item.borrowed : 10;
         var val = bi.item ? bi.item.name + ' (可借' + max + ')' : '';
         var rmv = currentBorrowItems.length > 1 ? '<button class="remove-btn" onclick="removeBorrowItem(' + i + ')">×</button>' : '';
-        html += '<div class="borrow-item"><div class="search-select"><input type="text" value="' + val + '" placeholder="选择物品" onfocus="showItemDd(' + i + ')" onclick="showItemDd(' + i + ')"><span class="dropdown-icon">▼</span><div class="dropdown-list" id="dd' + i + '"></div></div><input type="number" value="' + (bi.qty || 1) + '" min="1" max="' + max + '" oninput="clampBorrowQty(' + i + ',' + max + ',this)" onchange="clampBorrowQty(' + i + ',' + max + ',this)">' + rmv + '</div>';
+        html += '<div class="borrow-item"><div class="search-select"><input type="text" value="' + val + '" placeholder="搜索物品..." onfocus="showItemDd(' + i + ')" onclick="showItemDd(' + i + ')" oninput="searchItemDd(' + i + ')"><span class="dropdown-icon">▼</span><div class="dropdown-list" id="dd' + i + '"></div></div><input type="number" value="' + (bi.qty || 1) + '" min="1" max="' + max + '" oninput="clampBorrowQty(' + i + ',' + max + ',this)" onchange="clampBorrowQty(' + i + ',' + max + ',this)">' + rmv + '</div>';
     });
     container.innerHTML = html;
     currentBorrowItems.forEach((bi, i) => updateItemDd(i));
@@ -416,6 +416,30 @@ function showItemDd(i) {
     document.querySelectorAll('[id^="dd"]').forEach(d => d.classList.remove('show'));
     document.getElementById('dd' + i).classList.add('show');
     updateItemDd(i);
+}
+
+function searchItemDd(i) {
+    var input = document.getElementById('dd' + i).parentElement.querySelector('input');
+    var keyword = input.value.toLowerCase().trim();
+    // 如果已选了物品，搜索时清空选择重新搜
+    if (currentBorrowItems[i].item && keyword && !currentBorrowItems[i].item.name.toLowerCase().includes(keyword.replace(/\(可借\d+\)/g,'').trim())) {
+        currentBorrowItems[i].item = null;
+        currentBorrowItems[i].qty = 1;
+    }
+    var sel = currentBorrowItems.filter((b, k) => k !== i && b.item).map(b => b.item.id);
+    var opts = items.filter(it => it.total - it.borrowed > 0 && !sel.includes(it.id));
+    
+    if (keyword) {
+        var kw = keyword.replace(/\(可借\d+\)/g,'').trim().toLowerCase();
+        // 匹配的排前面，不匹配的排后面
+        var matched = opts.filter(it => it.name.toLowerCase().includes(kw));
+        var unmatched = opts.filter(it => !it.name.toLowerCase().includes(kw));
+        opts = matched.concat(unmatched);
+    }
+    
+    var html = opts.map(it => '<div class="dropdown-item" onclick="selectItem(' + i + ',' + it.id + ',\'' + it.name + '\',' + (it.total - it.borrowed) + ')">' + it.name + ' (可借' + (it.total - it.borrowed) + ')</div>').join('') || '<div class="dropdown-empty">无可用物品</div>';
+    var dd = document.getElementById('dd' + i);
+    if (dd) dd.innerHTML = html;
 }
 
 function updateItemDd(i) {
