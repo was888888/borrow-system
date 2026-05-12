@@ -410,7 +410,7 @@ function renderBorrowItems() {
         var max = bi.item ? bi.item.total - bi.item.borrowed : 10;
         var val = bi.item ? bi.item.name + ' (可借' + max + ')' : '';
         var rmv = currentBorrowItems.length > 1 ? '<button class="remove-btn" onclick="removeBorrowItem(' + i + ')">×</button>' : '';
-        html += '<div class="borrow-item"><div class="search-select"><input type="text" value="' + val + '" placeholder="选择物品" onfocus="showItemDd(' + i + ')" onclick="showItemDd(' + i + ')"><span class="dropdown-icon">▼</span><div class="dropdown-list" id="dd' + i + '"></div></div><input type="number" value="' + (bi.qty || 1) + '" min="1" max="' + max + '" oninput="clampBorrowQty(' + i + ',' + max + ',this)" onchange="clampBorrowQty(' + i + ',' + max + ',this)">' + rmv + '</div>';
+        html += '<div class="borrow-item"><div class="search-select"><input type="text" value="' + val + '" placeholder="选择物品" onfocus="showItemDd(' + i + ')" onclick="showItemDd(' + i + ')" oninput="filterItemDd(' + i + ')"><span class="dropdown-icon">▼</span><div class="dropdown-list" id="dd' + i + '"></div></div><input type="number" value="' + (bi.qty || 1) + '" min="1" max="' + max + '" oninput="clampBorrowQty(' + i + ',' + max + ',this)" onchange="clampBorrowQty(' + i + ',' + max + ',this)">' + rmv + '</div>';
     });
     container.innerHTML = html;
     currentBorrowItems.forEach((bi, i) => updateItemDd(i));
@@ -422,12 +422,31 @@ function showItemDd(i) {
     updateItemDd(i);
 }
 
-function updateItemDd(i) {
+function updateItemDd(i, keyword) {
     var sel = currentBorrowItems.filter((b, k) => k !== i && b.item).map(b => b.item.id);
     var opts = items.filter(it => it.total - it.borrowed > 0 && !sel.includes(it.id));
+    // 按关键词过滤并置顶匹配项
+    if (keyword) {
+        var kw = keyword.toLowerCase();
+        var matched = opts.filter(it => it.name.toLowerCase().includes(kw));
+        var rest = opts.filter(it => !it.name.toLowerCase().includes(kw));
+        opts = [...matched, ...rest];
+    }
     var html = opts.map(it => '<div class="dropdown-item" onclick="selectItem(' + i + ',' + it.id + ',\'' + it.name + '\',' + (it.total - it.borrowed) + ')">' + it.name + ' (可借' + (it.total - it.borrowed) + ')</div>').join('') || '<div class="dropdown-empty">无可用物品</div>';
     var dd = document.getElementById('dd' + i);
     if (dd) dd.innerHTML = html;
+}
+
+function filterItemDd(i) {
+    var input = document.querySelectorAll('.borrow-item .search-select input')[i];
+    var keyword = input ? input.value.trim() : '';
+    // 已选物品时清空搜索
+    if (currentBorrowItems[i].item && keyword.includes('可借')) {
+        currentBorrowItems[i].item = null;
+        currentBorrowItems[i].qty = 1;
+    }
+    showItemDd(i);
+    updateItemDd(i, keyword);
 }
 
 function selectItem(i, id, name, max) {
