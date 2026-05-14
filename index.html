@@ -18,14 +18,15 @@
         .home-header { background: rgba(255,255,255,0.12); color: white; padding: 45px 20px 32px; text-align: center; }
         .home-header h1 { font-size: 1.9rem; margin-bottom: 6px; font-weight: 700; }
         .home-header p { opacity: 0.85; font-size: 0.9rem; }
-        .card-container { padding: 20px; max-width: 500px; margin: 0 auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+        .card-container { padding: 20px; max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+        @media (min-width: 768px) { .card-container { grid-template-columns: repeat(4, 1fr); } }
         .nav-card { background: white; border-radius: 18px; padding: 24px 15px; text-align: center; cursor: pointer; box-shadow: 0 8px 30px rgba(0,0,0,0.12); transition: transform 0.2s; position: relative; }
         .nav-card:active { transform: scale(0.96); }
         .nav-card .icon { font-size: 2.4rem; margin-bottom: 8px; display: block; }
         .nav-card .title { font-size: 1.05rem; font-weight: 700; color: #333; }
         .nav-card .desc { font-size: 0.75rem; color: #888; margin-top: 4px; }
         .nav-card .badge { position: absolute; top: 12px; right: 12px; background: #ff5252; color: white; font-size: 0.7rem; padding: 3px 9px; border-radius: 12px; font-weight: 600; }
-        .recent-borrow { margin: 0 20px 20px; max-width: 460px; margin-left: auto; margin-right: auto; }
+        .recent-borrow { margin: 0 20px 20px; max-width: 900px; margin-left: auto; margin-right: auto; }
         .recent-borrow-card { background: white; border-radius: 14px; padding: 14px 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 14px; }
         .recent-borrow-card .avatar { width: 44px; height: 44px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 1.1rem; }
         .recent-borrow-card .info { flex: 1; min-width: 0; }
@@ -35,7 +36,8 @@
         .page-header { background: white; padding: 12px 15px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); position: sticky; top: 0; z-index: 100; }
         .back-btn { width: 36px; height: 36px; border: none; background: #f0f0f0; border-radius: 10px; font-size: 1.3rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .page-header h1 { font-size: 1.2rem; color: #333; }
-        .content { padding: 15px; max-width: 500px; margin: 0 auto; padding-bottom: 100px; }
+        .content { padding: 15px; max-width: 900px; margin: 0 auto; padding-bottom: 100px; }
+        @media (min-width: 768px) { .content { padding: 20px 30px; } }
         .card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
         .card-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 12px; color: #667eea; }
         .form-group { margin-bottom: 12px; }
@@ -74,6 +76,7 @@
         .return-item:last-child { border-bottom: none; }
         .return-item-name { font-weight: 500; font-size: 0.95rem; color: #333; }
         .history-card { background: white; border-radius: 16px; margin-bottom: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        @media (min-width: 768px) { #historyList { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; } .history-card { margin-bottom: 0; } }
         .history-header { padding: 12px 16px; background: #f8f9fa; display: flex; justify-content: space-between; align-items: center; }
         .history-left { display: flex; align-items: center; gap: 12px; }
         .history-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.9rem; }
@@ -91,6 +94,7 @@
         .search-box { padding: 10px 15px; background: white; position: sticky; top: 60px; z-index: 50; }
         .search-box input { width: 100%; padding: 10px 15px; border: none; border-radius: 25px; background: #f5f5f5; font-size: 0.9rem; }
         .inventory-item { padding: 14px 16px; background: white; border-radius: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        @media (min-width: 768px) { #inventoryList { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; } .inventory-item { margin-bottom: 0; } }
         .inventory-item:active { transform: scale(0.98); }
         .inventory-name { font-weight: 600; color: #333; font-size: 0.95rem; }
         .inventory-stock { font-size: 0.85rem; color: #666; margin-top: 4px; }
@@ -99,6 +103,10 @@
         .inventory-right { text-align: right; }
         .inventory-right .count { font-size: 1.4rem; font-weight: 700; color: #667eea; }
         .inventory-right .unit { font-size: 0.75rem; color: #888; }
+        .qty-btn { width: 30px; height: 30px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 8px; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #667eea; font-weight: 600; transition: background 0.15s; }
+        .qty-btn:active { background: #667eea; color: white; }
+        .del-btn { width: 30px; height: 30px; border: none; background: #ffebee; border-radius: 8px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #e53935; font-weight: 600; margin-left: 4px; transition: background 0.15s; }
+        .del-btn:active { background: #e53935; color: white; }
         .empty { text-align: center; padding: 30px; color: #999; font-size: 0.9rem; }
         .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 24px; border-radius: 25px; font-size: 0.9rem; z-index: 1000; opacity: 0; transition: opacity 0.3s; pointer-events: none; font-weight: 500; }
         .toast.show { opacity: 1; }
@@ -555,9 +563,25 @@ function initInventory() {
     var container = document.getElementById('inventoryList');
     var html = items.map((it, i) => {
         var stock = it.total - it.borrowed;
-        return '<div class="inventory-item" onclick="showDeleteModal(' + i + ')"><div><div class="inventory-name">' + it.name + '</div><div class="inventory-stock">共 ' + it.total + ' 件' + (it.borrowed > 0 ? '<span class="borrowed-info"> · 已借' + it.borrowed + '</span>' : '') + '</div></div><div class="inventory-right"><div class="count ' + (stock <= 1 ? 'low-stock' : '') + '">' + stock + '</div><div class="unit">可借</div></div></div>';
+        return '<div class="inventory-item"><div style="flex:1;min-width:0;"><div class="inventory-name">' + it.name + '</div><div class="inventory-stock">共 ' + it.total + ' 件' + (it.borrowed > 0 ? '<span class="borrowed-info"> · 已借' + it.borrowed + '</span>' : '') + '</div></div><div style="display:flex;align-items:center;gap:8px;"><button class="qty-btn" onclick="changeQty(' + i + ',-1)">-</button><span style="font-size:1.3rem;font-weight:700;color:' + (stock <= 1 ? '#e53935' : '#667eea') + ';min-width:28px;text-align:center;">' + stock + '</span><button class="qty-btn" onclick="changeQty(' + i + ',1)">+</button><button class="del-btn" onclick="showDeleteModal(' + i + ')">×</button></div></div>';
     }).join('');
     container.innerHTML = html;
+}
+
+async function changeQty(i, delta) {
+    var it = items[i];
+    var newTotal = it.total + delta;
+    if (newTotal < 1) { showToast('库存最少为1'); return; }
+    if (newTotal < it.borrowed) { showToast('库存不能少于已借出数量'); return; }
+    try {
+        var { error } = await db.from('items').update({ total: newTotal }).eq('id', it.id);
+        if (error) { showToast('更新失败'); return; }
+        it.total = newTotal;
+        initInventory();
+    } catch(e) {
+        console.error('更新库存异常:', e);
+        showToast('网络异常，请重试');
+    }
 }
 
 function showAddItemModal() { document.getElementById('addItemModal').classList.add('active'); document.getElementById('newItemName').focus(); }
