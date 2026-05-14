@@ -99,10 +99,6 @@
         .inventory-right { text-align: right; }
         .inventory-right .count { font-size: 1.4rem; font-weight: 700; color: #667eea; }
         .inventory-right .unit { font-size: 0.75rem; color: #888; }
-        .qty-btn { width: 28px; height: 28px; border-radius: 8px; border: 1.5px solid #667eea; background: #fff; color: #667eea; font-size: 1rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
-        .qty-btn:active { background: #667eea; color: #fff; transform: scale(0.92); }
-        .del-btn { padding: 2px 10px; border-radius: 6px; border: 1.5px solid #e53935; background: #fff; color: #e53935; font-size: 0.75rem; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-        .del-btn:active { background: #e53935; color: #fff; }
         .empty { text-align: center; padding: 30px; color: #999; font-size: 0.9rem; }
         .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 24px; border-radius: 25px; font-size: 0.9rem; z-index: 1000; opacity: 0; transition: opacity 0.3s; pointer-events: none; font-weight: 500; }
         .toast.show { opacity: 1; }
@@ -192,6 +188,7 @@
     <div class="page-header">
         <button class="back-btn" onclick="showPage('home')">←</button>
         <h1>📜 借还记录</h1>
+        <button class="btn btn-small" style="margin-left:auto;background:#667eea;color:white;border:none;border-radius:8px;font-size:0.8rem;padding:6px 14px;" onclick="exportHistory()">导出</button>
     </div>
     <div class="search-box">
         <input type="text" id="searchInput" placeholder="搜索姓名或物品..." oninput="filterHistory()">
@@ -410,7 +407,7 @@ function renderBorrowItems() {
         var max = bi.item ? bi.item.total - bi.item.borrowed : 10;
         var val = bi.item ? bi.item.name + ' (可借' + max + ')' : '';
         var rmv = currentBorrowItems.length > 1 ? '<button class="remove-btn" onclick="removeBorrowItem(' + i + ')">×</button>' : '';
-        html += '<div class="borrow-item"><div class="search-select"><input type="text" value="' + val + '" placeholder="选择物品" onfocus="showItemDd(' + i + ')" onclick="showItemDd(' + i + ')" oninput="filterItemDd(' + i + ')"><span class="dropdown-icon">▼</span><div class="dropdown-list" id="dd' + i + '"></div></div><input type="number" value="' + (bi.qty || 1) + '" min="1" max="' + max + '" oninput="clampBorrowQty(' + i + ',' + max + ',this)" onchange="clampBorrowQty(' + i + ',' + max + ',this)">' + rmv + '</div>';
+        html += '<div class="borrow-item"><div class="search-select"><input type="text" value="' + val + '" placeholder="选择物品" onfocus="showItemDd(' + i + ')" onclick="showItemDd(' + i + ')"><span class="dropdown-icon">▼</span><div class="dropdown-list" id="dd' + i + '"></div></div><input type="number" value="' + (bi.qty || 1) + '" min="1" max="' + max + '" oninput="clampBorrowQty(' + i + ',' + max + ',this)" onchange="clampBorrowQty(' + i + ',' + max + ',this)">' + rmv + '</div>';
     });
     container.innerHTML = html;
     currentBorrowItems.forEach((bi, i) => updateItemDd(i));
@@ -422,31 +419,12 @@ function showItemDd(i) {
     updateItemDd(i);
 }
 
-function updateItemDd(i, keyword) {
+function updateItemDd(i) {
     var sel = currentBorrowItems.filter((b, k) => k !== i && b.item).map(b => b.item.id);
     var opts = items.filter(it => it.total - it.borrowed > 0 && !sel.includes(it.id));
-    // 按关键词过滤并置顶匹配项
-    if (keyword) {
-        var kw = keyword.toLowerCase();
-        var matched = opts.filter(it => it.name.toLowerCase().includes(kw));
-        var rest = opts.filter(it => !it.name.toLowerCase().includes(kw));
-        opts = [...matched, ...rest];
-    }
     var html = opts.map(it => '<div class="dropdown-item" onclick="selectItem(' + i + ',' + it.id + ',\'' + it.name + '\',' + (it.total - it.borrowed) + ')">' + it.name + ' (可借' + (it.total - it.borrowed) + ')</div>').join('') || '<div class="dropdown-empty">无可用物品</div>';
     var dd = document.getElementById('dd' + i);
     if (dd) dd.innerHTML = html;
-}
-
-function filterItemDd(i) {
-    var input = document.querySelectorAll('.borrow-item .search-select input')[i];
-    var keyword = input ? input.value.trim() : '';
-    // 已选物品时清空搜索
-    if (currentBorrowItems[i].item && keyword.includes('可借')) {
-        currentBorrowItems[i].item = null;
-        currentBorrowItems[i].qty = 1;
-    }
-    showItemDd(i);
-    updateItemDd(i, keyword);
 }
 
 function selectItem(i, id, name, max) {
@@ -577,25 +555,9 @@ function initInventory() {
     var container = document.getElementById('inventoryList');
     var html = items.map((it, i) => {
         var stock = it.total - it.borrowed;
-        return '<div class="inventory-item"><div style="flex:1;min-width:0"><div class="inventory-name">' + it.name + '</div><div class="inventory-stock">共 ' + it.total + ' 件' + (it.borrowed > 0 ? '<span class="borrowed-info"> · 已借' + it.borrowed + '</span>' : '') + '</div></div><div class="inventory-right"><div style="display:flex;align-items:center;gap:6px"><button class="qty-btn" onclick="event.stopPropagation();changeQty(' + i + ',1)">+</button><div class="count ' + (stock <= 1 ? 'low-stock' : '') + '">' + stock + '</div><button class="qty-btn" onclick="event.stopPropagation();changeQty(' + i + ',-1)">-</button></div><div style="display:flex;align-items:center;gap:8px;margin-top:4px"><div class="unit">可借</div><button class="del-btn" onclick="event.stopPropagation();showDeleteModal(' + i + ')">删除</button></div></div></div>';
+        return '<div class="inventory-item" onclick="showDeleteModal(' + i + ')"><div><div class="inventory-name">' + it.name + '</div><div class="inventory-stock">共 ' + it.total + ' 件' + (it.borrowed > 0 ? '<span class="borrowed-info"> · 已借' + it.borrowed + '</span>' : '') + '</div></div><div class="inventory-right"><div class="count ' + (stock <= 1 ? 'low-stock' : '') + '">' + stock + '</div><div class="unit">可借</div></div></div>';
     }).join('');
     container.innerHTML = html;
-}
-
-async function changeQty(i, delta) {
-    var it = items[i];
-    var newTotal = it.total + delta;
-    if (newTotal < 1) { showToast('数量不能少于1'); return; }
-    if (newTotal < it.borrowed) { showToast('数量不能少于已借出数(' + it.borrowed + ')'); return; }
-    try {
-        const { error } = await db.from('items').update({ total: newTotal }).eq('id', it.id);
-        if (error) { showToast('更新失败'); return; }
-        it.total = newTotal;
-        initInventory();
-        showToast((delta > 0 ? '增加' : '减少') + Math.abs(delta) + '件');
-    } catch(e) {
-        showToast('网络异常');
-    }
 }
 
 function showAddItemModal() { document.getElementById('addItemModal').classList.add('active'); document.getElementById('newItemName').focus(); }
@@ -653,13 +615,6 @@ function showDeleteModal(i) {
         if (it.borrowed > 0) { showToast('该物品还有借出未归还'); hideDeleteModal(); return; }
         
         try {
-            // 先删除关联的借用记录，再删除物品
-            const { error: err1 } = await db.from('records').delete().eq('item_id', it.id);
-            if (err1) {
-                console.error('删除借用记录失败:', err1);
-                showToast('删除借用记录失败: ' + (err1.message || '未知错误'));
-                return;
-            }
             const { error } = await db.from('items').delete().eq('id', it.id);
             if (error) {
                 console.error('删除失败详情:', error);
@@ -677,6 +632,60 @@ function showDeleteModal(i) {
     };
 }
 function hideDeleteModal() { document.getElementById('deleteModal').classList.remove('active'); }
+
+function exportHistory() {
+    if (!records.length) { showToast('暂无记录可导出'); return; }
+    
+    var kw = document.getElementById('searchInput').value.toLowerCase().trim();
+    var filtered = kw ? records.filter(r => r.borrower.toLowerCase().includes(kw) || r.item_name.toLowerCase().includes(kw)) : records;
+    
+    if (!filtered.length) { showToast('当前筛选无记录'); return; }
+
+    showLoading();
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
+    s.onload = function() {
+        try {
+            var bdr = { style: 'thin', color: { rgb: '000000' } };
+            var border = { top: bdr, bottom: bdr, left: bdr, right: bdr };
+            var hStyle = { font: { name: '宋体', sz: 11, bold: true }, alignment: { horizontal: 'center', vertical: 'center' }, border: border };
+            var cStyle = { font: { name: '宋体', sz: 10 }, alignment: { horizontal: 'center', vertical: 'center' }, border: border };
+
+            var headers = ['序号', '借用人', '物品名称', '数量', '状态', '借出时间', '归还时间'];
+            var wsData = [headers.map(function(h) { return { v: h, s: hStyle }; })];
+
+            filtered.forEach(function(r, i) {
+                var bt = new Date(r.borrow_time).toLocaleString('zh-CN');
+                var rt = r.return_time ? new Date(r.return_time).toLocaleString('zh-CN') : '';
+                var st = r.status === 'returned' ? '已归还' : '借出中';
+                wsData.push([i + 1, r.borrower, r.item_name, r.quantity, st, bt, rt].map(function(v) { return { v: v, s: cStyle }; }));
+            });
+
+            var ws = XLSX.utils.aoa_to_sheet(wsData.map(function(row) { return row.map(function(c) { return c.v; }); }));
+            wsData.forEach(function(row, r) {
+                row.forEach(function(c, ci) {
+                    var addr = XLSX.utils.encode_cell({ r: r, c: ci });
+                    if (ws[addr]) ws[addr].s = c.s;
+                });
+            });
+            ws['!cols'] = [{ wch: 6 }, { wch: 10 }, { wch: 14 }, { wch: 6 }, { wch: 8 }, { wch: 20 }, { wch: 20 }];
+            ws['!ref'] = 'A1:G' + wsData.length;
+
+            var wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '借还记录');
+            var now = new Date();
+            var fname = '借还记录_' + now.getFullYear() + (now.getMonth()+1).toString().padStart(2,'0') + now.getDate().toString().padStart(2,'0') + '.xlsx';
+            XLSX.writeFile(wb, fname);
+            showToast('导出成功');
+        } catch(e) {
+            console.error('导出失败:', e);
+            showToast('导出失败，请重试');
+        }
+        hideLoading();
+    };
+    s.onerror = function() { hideLoading(); showToast('加载导出组件失败，请检查网络'); };
+    document.head.appendChild(s);
+}
 
 loadData();
 </script>
