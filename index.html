@@ -15,11 +15,11 @@
         }
         .page { display: none; }
         .page.active { display: block; }
-        .home-header { background: rgba(255,255,255,0.12); color: white; padding: 45px 20px 32px; text-align: center; }
+        .home-header { background: rgba(255,255,255,0.12); color: white; padding: 60px 20px 40px; text-align: center; }
         .home-header h1 { font-size: 1.9rem; margin-bottom: 6px; font-weight: 700; }
         .home-header p { opacity: 0.85; font-size: 0.9rem; }
         .card-container { padding: 20px; max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-        @media (min-width: 768px) { .card-container { grid-template-columns: repeat(4, 1fr); } }
+        @media (min-width: 768px) { .card-container { grid-template-columns: repeat(2, 1fr); max-width: 800px; } .nav-card { padding: 36px 20px; } .nav-card .icon { font-size: 3.2rem; } .nav-card .title { font-size: 1.25rem; } .home-header { padding: 80px 20px 50px; } .home-header h1 { font-size: 2.4rem; } }
         .nav-card { background: white; border-radius: 18px; padding: 24px 15px; text-align: center; cursor: pointer; box-shadow: 0 8px 30px rgba(0,0,0,0.12); transition: transform 0.2s; position: relative; }
         .nav-card:active { transform: scale(0.96); }
         .nav-card .icon { font-size: 2.4rem; margin-bottom: 8px; display: block; }
@@ -117,6 +117,35 @@
         .modal-buttons { display: flex; gap: 12px; margin-top: 18px; }
         .modal-buttons .btn { flex: 1; }
         .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 20px 30px; border-radius: 15px; font-size: 1rem; z-index: 2000; }
+        /* 管理后台样式 */
+        .admin-float-btn { position: fixed; bottom: 30px; right: 20px; width: 48px; height: 48px; background: linear-gradient(135deg, #4a4a4a 0%, #2d2d2d 100%); color: white; border: none; border-radius: 50%; font-size: 1.4rem; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; z-index: 90; transition: transform 0.2s; }
+        .admin-float-btn:active { transform: scale(0.9); }
+        .admin-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+        @media (min-width: 768px) { .admin-stats { grid-template-columns: repeat(4, 1fr); } }
+        .stat-card { background: white; border-radius: 14px; padding: 16px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .stat-card .stat-value { font-size: 1.8rem; font-weight: 700; color: #667eea; }
+        .stat-card .stat-label { font-size: 0.8rem; color: #888; margin-top: 4px; }
+        .admin-section { background: white; border-radius: 16px; margin-bottom: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .admin-section-title { padding: 14px 16px; font-weight: 600; color: #333; font-size: 1rem; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .admin-record-item { padding: 12px 16px; border-bottom: 1px solid #f5f5f5; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .admin-record-item:last-child { border-bottom: none; }
+        .admin-record-info { flex: 1; min-width: 0; }
+        .admin-record-main { font-size: 0.9rem; color: #333; font-weight: 500; }
+        .admin-record-sub { font-size: 0.75rem; color: #888; margin-top: 2px; }
+        .admin-inv-item { padding: 12px 16px; border-bottom: 1px solid #f5f5f5; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .admin-inv-item:last-child { border-bottom: none; }
+        .admin-inv-info { flex: 1; min-width: 0; }
+        .admin-inv-name { font-weight: 600; color: #333; font-size: 0.95rem; }
+        .admin-inv-detail { font-size: 0.8rem; color: #888; margin-top: 2px; }
+        .edit-btn { width: 30px; height: 30px; border: none; background: #e8f0fe; border-radius: 8px; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #667eea; margin-left: 4px; transition: background 0.15s; }
+        .edit-btn:active { background: #667eea; color: white; }
+        .admin-batch-btn { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: 500; }
+        .admin-batch-btn:active { opacity: 0.8; }
+        .admin-tabs { display: flex; gap: 0; margin-bottom: 16px; background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .admin-tab { flex: 1; padding: 12px; text-align: center; font-size: 0.9rem; font-weight: 600; cursor: pointer; color: #888; border-bottom: 3px solid transparent; transition: all 0.2s; }
+        .admin-tab.active { color: #667eea; border-bottom-color: #667eea; background: #f8f9ff; }
+        .admin-tab-content { display: none; }
+        .admin-tab-content.active { display: block; }
     </style>
 </head>
 <body>
@@ -154,6 +183,7 @@
             <div class="desc" id="stockInfo">加载中...</div>
         </div>
     </div>
+    <div class="admin-float-btn" onclick="tryEnterAdmin()">⚙️</div>
 </div>
 
 <!-- 借出页 -->
@@ -186,6 +216,9 @@
         <button class="back-btn" onclick="showPage('home')">←</button>
         <h1>📥 归还登记</h1>
     </div>
+    <div class="search-box">
+        <input type="text" id="returnSearchInput" placeholder="搜索姓名或物品..." oninput="filterReturn()">
+    </div>
     <div class="content">
         <div id="returnList"></div>
     </div>
@@ -212,9 +245,11 @@
         <button class="back-btn" onclick="showPage('home')">←</button>
         <h1>📋 物品库存</h1>
     </div>
+    <div class="search-box">
+        <input type="text" id="inventorySearchInput" placeholder="搜索物品名称..." oninput="filterInventory()">
+    </div>
     <div class="content">
         <div id="inventoryList"></div>
-        <button class="btn btn-secondary" onclick="showAddItemModal()" style="margin-top: 10px;">+ 添加新物品</button>
     </div>
 </div>
 
@@ -245,6 +280,111 @@
         <div class="modal-buttons">
             <button class="btn btn-secondary" onclick="hideDeleteModal()">取消</button>
             <button class="btn btn-danger" id="confirmDeleteBtn">删除</button>
+        </div>
+    </div>
+</div>
+
+<!-- 管理员密码弹窗 -->
+<div class="modal-overlay" id="adminPasswordModal">
+    <div class="modal">
+        <div class="modal-title">🔒 管理员验证</div>
+        <div class="form-group">
+            <label>请输入管理密码</label>
+            <input type="password" id="adminPasswordInput" placeholder="输入密码" onkeydown="if(event.key==='Enter')verifyAdminPassword()">
+        </div>
+        <div class="modal-buttons">
+            <button class="btn btn-secondary" onclick="hideAdminPasswordModal()">取消</button>
+            <button class="btn btn-primary" onclick="verifyAdminPassword()">确认</button>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑物品名称弹窗 -->
+<div class="modal-overlay" id="editItemModal">
+    <div class="modal">
+        <div class="modal-title">✏️ 修改物品名称</div>
+        <div class="form-group">
+            <label>新名称</label>
+            <input type="text" id="editItemNameInput" placeholder="输入新名称">
+        </div>
+        <div class="modal-buttons">
+            <button class="btn btn-secondary" onclick="hideEditItemModal()">取消</button>
+            <button class="btn btn-primary" onclick="confirmEditItem()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 修改借出数弹窗 -->
+<div class="modal-overlay" id="editBorrowedModal">
+    <div class="modal">
+        <div class="modal-title">修改借出数量</div>
+        <div class="form-group">
+            <label id="editBorrowedLabel">物品名称</label>
+            <input type="number" id="editBorrowedInput" min="0" value="0">
+        </div>
+        <div class="modal-buttons">
+            <button class="btn btn-secondary" onclick="hideEditBorrowedModal()">取消</button>
+            <button class="btn btn-primary" onclick="confirmEditBorrowed()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 修改总数量弹窗 -->
+<div class="modal-overlay" id="editTotalModal">
+    <div class="modal">
+        <div class="modal-title">修改总数量</div>
+        <div class="form-group">
+            <label id="editTotalLabel">物品名称</label>
+            <input type="number" id="editTotalInput" min="1" value="1">
+        </div>
+        <div class="modal-buttons">
+            <button class="btn btn-secondary" onclick="hideEditTotalModal()">取消</button>
+            <button class="btn btn-primary" onclick="confirmEditTotal()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 修改记录数量弹窗 -->
+<div class="modal-overlay" id="editRecordQtyModal">
+    <div class="modal">
+        <div class="modal-title">修改借出数量</div>
+        <div class="form-group">
+            <label id="editRecordQtyLabel">记录</label>
+            <input type="number" id="editRecordQtyInput" min="1" value="1">
+        </div>
+        <div class="modal-buttons">
+            <button class="btn btn-secondary" onclick="hideEditRecordQtyModal()">取消</button>
+            <button class="btn btn-primary" onclick="confirmEditRecordQty()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 管理员后台页 -->
+<div id="admin" class="page">
+    <div class="page-header">
+        <button class="back-btn" onclick="showPage('home')">←</button>
+        <h1>⚙️ 管理后台</h1>
+    </div>
+    <div class="content">
+        <div class="admin-stats" id="adminStats"></div>
+        <div class="admin-tabs">
+            <div class="admin-tab active" onclick="switchAdminTab('records')">记录管理</div>
+            <div class="admin-tab" onclick="switchAdminTab('inventory')">库存管理</div>
+        </div>
+        <div class="admin-tab-content active" id="adminTabRecords">
+            <div class="admin-section">
+                <div class="admin-section-title">
+                    <span>借还记录</span>
+                </div>
+                <div id="adminRecordList"></div>
+            </div>
+        </div>
+        <div class="admin-tab-content" id="adminTabInventory">
+            <div class="admin-section">
+                <div class="admin-section-title">物品管理（含编辑）</div>
+                <button class="btn btn-secondary" onclick="showAddItemModal()" style="margin-bottom:10px;">+ 添加新物品</button>
+                <div id="adminInventoryList"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -296,6 +436,7 @@ function showPage(pageId) {
     if (pageId === 'return') initReturn();
     if (pageId === 'history') initHistory();
     if (pageId === 'inventory') initInventory();
+    if (pageId === 'admin') initAdmin();
 }
 
 function updateHome() {
@@ -485,9 +626,20 @@ async function doBorrow() {
 }
 
 async function initReturn() {
+    document.getElementById('returnSearchInput').value = '';
+    filterReturn();
+}
+
+function filterReturn() {
     var container = document.getElementById('returnList');
     var active = records.filter(r => r.status === 'borrowed');
     if (!active.length) { container.innerHTML = '<div class="card"><div class="empty">暂无借出物品</div></div>'; return; }
+
+    var kw = document.getElementById('returnSearchInput').value.toLowerCase().trim();
+    if (kw) {
+        active = active.filter(r => r.borrower.toLowerCase().includes(kw) || r.item_name.toLowerCase().includes(kw));
+        if (!active.length) { container.innerHTML = '<div class="card"><div class="empty">未找到匹配记录</div></div>'; return; }
+    }
     
     var groups = {};
     active.forEach(r => { groups[r.borrower] = groups[r.borrower] || []; groups[r.borrower].push(r); });
@@ -560,10 +712,21 @@ function filterHistory() {
 }
 
 function initInventory() {
+    document.getElementById('inventorySearchInput').value = '';
+    filterInventory();
+}
+
+function filterInventory() {
     var container = document.getElementById('inventoryList');
-    var html = items.map((it, i) => {
+    var filtered = items;
+    var kw = document.getElementById('inventorySearchInput').value.toLowerCase().trim();
+    if (kw) {
+        filtered = items.filter(it => it.name.toLowerCase().includes(kw));
+        if (!filtered.length) { container.innerHTML = '<div class="empty">未找到匹配物品</div>'; return; }
+    }
+    var html = filtered.map((it, i) => {
         var stock = it.total - it.borrowed;
-        return '<div class="inventory-item"><div style="flex:1;min-width:0;"><div class="inventory-name">' + it.name + '</div><div class="inventory-stock">共 ' + it.total + ' 件' + (it.borrowed > 0 ? '<span class="borrowed-info"> · 已借' + it.borrowed + '</span>' : '') + '</div></div><div style="display:flex;align-items:center;gap:8px;"><button class="qty-btn" onclick="changeQty(' + i + ',-1)">-</button><span style="font-size:1.3rem;font-weight:700;color:' + (stock <= 1 ? '#e53935' : '#667eea') + ';min-width:28px;text-align:center;">' + stock + '</span><button class="qty-btn" onclick="changeQty(' + i + ',1)">+</button><button class="del-btn" onclick="showDeleteModal(' + i + ')">×</button></div></div>';
+        return '<div class="inventory-item"><div style="flex:1;min-width:0;"><div class="inventory-name">' + it.name + '</div><div class="inventory-stock">共 ' + it.total + ' 件' + (it.borrowed > 0 ? '<span class="borrowed-info"> · 已借' + it.borrowed + '</span>' : '') + '</div></div><div style="text-align:right;"><div style="font-size:1.4rem;font-weight:700;color:' + (stock <= 1 ? '#e53935' : '#667eea') + ';">' + stock + '</div><div style="font-size:0.75rem;color:#888;">可借</div></div></div>';
     }).join('');
     container.innerHTML = html;
 }
@@ -709,6 +872,325 @@ function exportHistory() {
     };
     s.onerror = function() { hideLoading(); showToast('加载导出组件失败，请检查网络'); };
     document.head.appendChild(s);
+}
+
+// ============ 管理员后台 ============
+var ADMIN_PASSWORD = 'was888';
+var adminEditingItemIdx = -1;
+
+function tryEnterAdmin() {
+    document.getElementById('adminPasswordInput').value = '';
+    document.getElementById('adminPasswordModal').classList.add('active');
+    setTimeout(function() { document.getElementById('adminPasswordInput').focus(); }, 100);
+}
+
+function hideAdminPasswordModal() {
+    document.getElementById('adminPasswordModal').classList.remove('active');
+}
+
+function verifyAdminPassword() {
+    var pwd = document.getElementById('adminPasswordInput').value;
+    if (pwd === ADMIN_PASSWORD) {
+        hideAdminPasswordModal();
+        showPage('admin');
+    } else {
+        showToast('密码错误');
+        document.getElementById('adminPasswordInput').value = '';
+        document.getElementById('adminPasswordInput').focus();
+    }
+}
+
+function initAdmin() {
+    renderAdminStats();
+    renderAdminRecords();
+    renderAdminInventory();
+}
+
+function renderAdminStats() {
+    var totalTypes = items.length;
+    var totalStock = items.reduce(function(s, i) { return s + i.total; }, 0);
+    var borrowedCount = records.filter(function(r) { return r.status === 'borrowed'; }).length;
+    var totalRecords = records.length;
+    document.getElementById('adminStats').innerHTML =
+        '<div class="stat-card"><div class="stat-value">' + totalTypes + '</div><div class="stat-label">物品种类</div></div>' +
+        '<div class="stat-card"><div class="stat-value">' + totalStock + '</div><div class="stat-label">总库存量</div></div>' +
+        '<div class="stat-card"><div class="stat-value">' + borrowedCount + '</div><div class="stat-label">借出中</div></div>' +
+        '<div class="stat-card"><div class="stat-value">' + totalRecords + '</div><div class="stat-label">总记录数</div></div>';
+}
+
+function switchAdminTab(tab) {
+    document.querySelectorAll('.admin-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.admin-tab-content').forEach(function(c) { c.classList.remove('active'); });
+    if (tab === 'records') {
+        document.querySelectorAll('.admin-tab')[0].classList.add('active');
+        document.getElementById('adminTabRecords').classList.add('active');
+    } else {
+        document.querySelectorAll('.admin-tab')[1].classList.add('active');
+        document.getElementById('adminTabInventory').classList.add('active');
+    }
+}
+
+function renderAdminRecords() {
+    var container = document.getElementById('adminRecordList');
+    if (!records.length) { container.innerHTML = '<div class="empty">暂无记录</div>'; return; }
+    var html = '';
+    records.forEach(function(r) {
+        var bt = new Date(r.borrow_time).toLocaleString('zh-CN');
+        var rt = r.return_time ? new Date(r.return_time).toLocaleString('zh-CN') : '';
+        var statusHtml = r.status === 'returned'
+            ? '<span class="status-badge status-returned">已归还</span>'
+            : '<span class="status-badge status-borrowed">借出中</span>';
+        html += '<div class="admin-record-item">' +
+            '<div class="admin-record-info">' +
+                '<div class="admin-record-main">' + r.borrower + ' — ' + r.item_name + ' ×' + r.quantity + ' ' + statusHtml + '</div>' +
+                '<div class="admin-record-sub">借出: ' + bt + (rt ? ' | 归还: ' + rt : '') + '</div>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:6px;">' +
+                '<button class="edit-btn" onclick="showEditRecordQtyModal(' + r.id + ')" title="修改数量" style="background:#e8f0fe;color:#667eea;">量</button>' +
+                '<button class="del-btn" onclick="adminDeleteRecord(' + r.id + ')" title="删除">×</button>' +
+            '</div>' +
+        '</div>';
+    });
+    container.innerHTML = html;
+}
+
+async function adminDeleteRecord(id) {
+    if (!confirm('确认删除这条记录？删除后不可恢复。')) return;
+    showLoading();
+    try {
+        var r = records.find(function(x) { return x.id === id; });
+        if (r && r.status === 'borrowed') {
+            var it = items.find(function(i) { return i.id === r.item_id; });
+            if (it) {
+                it.borrowed = Math.max(0, it.borrowed - r.quantity);
+                var { error: e2 } = await db.from('items').update({ borrowed: it.borrowed }).eq('id', it.id);
+                if (e2) { showToast('库存更新失败'); hideLoading(); return; }
+            }
+        }
+        var { error: e1 } = await db.from('records').delete().eq('id', id);
+        if (e1) { showToast('删除失败'); hideLoading(); return; }
+        await loadData();
+        initAdmin();
+        showToast('已删除');
+    } catch(e) {
+        console.error('删除记录异常:', e);
+        showToast('网络异常，请重试');
+        hideLoading();
+    }
+}
+
+var editingRecordId = -1;
+
+function showEditRecordQtyModal(id) {
+    editingRecordId = id;
+    var r = records.find(function(x) { return x.id === id; });
+    if (!r) return;
+    document.getElementById('editRecordQtyLabel').textContent = r.borrower + ' — ' + r.item_name + '（当前数量: ' + r.quantity + '）';
+    document.getElementById('editRecordQtyInput').value = r.quantity;
+    document.getElementById('editRecordQtyModal').classList.add('active');
+    setTimeout(function() { document.getElementById('editRecordQtyInput').focus(); }, 100);
+}
+
+function hideEditRecordQtyModal() {
+    document.getElementById('editRecordQtyModal').classList.remove('active');
+    editingRecordId = -1;
+}
+
+async function confirmEditRecordQty() {
+    if (editingRecordId < 0) return;
+    var newQty = parseInt(document.getElementById('editRecordQtyInput').value) || 1;
+    if (newQty < 1) { showToast('数量最少为1'); return; }
+    var r = records.find(function(x) { return x.id === editingRecordId; });
+    if (!r) { hideEditRecordQtyModal(); return; }
+    if (newQty === r.quantity) { hideEditRecordQtyModal(); return; }
+
+    showLoading();
+    try {
+        var diff = newQty - r.quantity;
+        // 更新记录数量
+        var { error: e1 } = await db.from('records').update({ quantity: newQty }).eq('id', r.id);
+        if (e1) { showToast('修改失败'); hideLoading(); return; }
+
+        // 如果是借出中，同步更新物品的borrowed
+        if (r.status === 'borrowed') {
+            var it = items.find(function(i) { return i.id === r.item_id; });
+            if (it) {
+                var newBorrowed = it.borrowed + diff;
+                if (newBorrowed < 0) newBorrowed = 0;
+                if (newBorrowed > it.total) { showToast('数量超过可借上限'); hideLoading(); return; }
+                var { error: e2 } = await db.from('items').update({ borrowed: newBorrowed }).eq('id', it.id);
+                if (e2) { showToast('库存更新失败'); hideLoading(); return; }
+                it.borrowed = newBorrowed;
+            }
+        }
+
+        r.quantity = newQty;
+        hideEditRecordQtyModal();
+        initAdmin();
+        showToast('数量已修改为' + newQty);
+    } catch(e) {
+        console.error('修改记录数量异常:', e);
+        showToast('网络异常，请重试');
+        hideLoading();
+    }
+}
+
+async function batchClearReturned() {
+    var returned = records.filter(function(r) { return r.status === 'returned'; });
+    if (!returned.length) { showToast('没有已归还记录可清空'); return; }
+    if (!confirm('确认清空所有 ' + returned.length + ' 条已归还记录？借出中的记录会保留。')) return;
+    showLoading();
+    try {
+        var ids = returned.map(function(r) { return r.id; });
+        var { error } = await db.from('records').delete().in('id', ids);
+        if (error) { showToast('清空失败'); hideLoading(); return; }
+        await loadData();
+        initAdmin();
+        showToast('已清空 ' + returned.length + ' 条归还记录');
+    } catch(e) {
+        console.error('批量清空异常:', e);
+        showToast('网络异常，请重试');
+        hideLoading();
+    }
+}
+
+function renderAdminInventory() {
+    var container = document.getElementById('adminInventoryList');
+    if (!items.length) { container.innerHTML = '<div class="empty">暂无物品</div>'; return; }
+    var html = '';
+    items.forEach(function(it, i) {
+        var stock = it.total - it.borrowed;
+        html += '<div class="admin-inv-item">' +
+            '<div class="admin-inv-info">' +
+                '<div class="admin-inv-name">' + it.name + '</div>' +
+                '<div class="admin-inv-detail">总' + it.total + '件 · 可用' + stock + '件' + (it.borrowed > 0 ? ' · 已借' + it.borrowed : '') + '</div>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:6px;">' +
+                '<button class="edit-btn" onclick="showEditItemModal(' + i + ')" title="编辑名称">✎</button>' +
+                '<button class="edit-btn" onclick="showEditTotalModal(' + i + ')" title="修改总数量" style="background:#e8f0fe;color:#667eea;">量</button>' +
+                '<button class="del-btn" onclick="showDeleteModal(' + i + ')" title="删除">×</button>' +
+            '</div>' +
+        '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function showEditItemModal(i) {
+    adminEditingItemIdx = i;
+    document.getElementById('editItemNameInput').value = items[i].name;
+    document.getElementById('editItemModal').classList.add('active');
+    setTimeout(function() { document.getElementById('editItemNameInput').focus(); }, 100);
+}
+
+function hideEditItemModal() {
+    document.getElementById('editItemModal').classList.remove('active');
+    adminEditingItemIdx = -1;
+}
+
+async function confirmEditItem() {
+    if (adminEditingItemIdx < 0) return;
+    var newName = document.getElementById('editItemNameInput').value.trim();
+    if (!newName) { showToast('名称不能为空'); return; }
+    var it = items[adminEditingItemIdx];
+    if (newName === it.name) { hideEditItemModal(); return; }
+    if (items.find(function(x) { return x.name === newName && x.id !== it.id; })) { showToast('该名称已存在'); return; }
+
+    showLoading();
+    try {
+        var { error } = await db.from('items').update({ name: newName }).eq('id', it.id);
+        if (error) { showToast('修改失败'); hideLoading(); return; }
+        // 同步更新 records 中对应的 item_name
+        var relatedRecords = records.filter(function(r) { return r.item_id === it.id; });
+        if (relatedRecords.length > 0) {
+            var relatedIds = relatedRecords.map(function(r) { return r.id; });
+            await db.from('records').update({ item_name: newName }).in('id', relatedIds);
+        }
+        it.name = newName;
+        relatedRecords.forEach(function(r) { r.item_name = newName; });
+        hideEditItemModal();
+        initAdmin();
+        showToast('修改成功');
+    } catch(e) {
+        console.error('修改名称异常:', e);
+        showToast('网络异常，请重试');
+        hideLoading();
+    }
+}
+
+function showEditTotalModal(i) {
+    adminEditingItemIdx = i;
+    var it = items[i];
+    document.getElementById('editTotalLabel').textContent = it.name + '（当前总数量' + it.total + '）';
+    document.getElementById('editTotalInput').value = it.total;
+    document.getElementById('editTotalInput').min = Math.max(1, it.borrowed);
+    document.getElementById('editTotalModal').classList.add('active');
+    setTimeout(function() { document.getElementById('editTotalInput').focus(); }, 100);
+}
+
+function hideEditTotalModal() {
+    document.getElementById('editTotalModal').classList.remove('active');
+    adminEditingItemIdx = -1;
+}
+
+async function confirmEditTotal() {
+    if (adminEditingItemIdx < 0) return;
+    var newVal = parseInt(document.getElementById('editTotalInput').value) || 1;
+    var it = items[adminEditingItemIdx];
+    if (newVal < 1) { showToast('总数量最少为1'); return; }
+    if (newVal < it.borrowed) { showToast('总数量不能少于已借出数' + it.borrowed); return; }
+    if (newVal === it.total) { hideEditTotalModal(); return; }
+
+    showLoading();
+    try {
+        var { error } = await db.from('items').update({ total: newVal }).eq('id', it.id);
+        if (error) { showToast('修改失败'); hideLoading(); return; }
+        it.total = newVal;
+        hideEditTotalModal();
+        initAdmin();
+        showToast('总数量已修改为' + newVal);
+    } catch(e) {
+        console.error('修改总数量异常:', e);
+        showToast('网络异常，请重试');
+        hideLoading();
+    }
+}
+
+function showEditBorrowedModal(i) {
+    adminEditingItemIdx = i;
+    var it = items[i];
+    document.getElementById('editBorrowedLabel').textContent = it.name + '（总库存' + it.total + '）';
+    document.getElementById('editBorrowedInput').value = it.borrowed;
+    document.getElementById('editBorrowedInput').max = it.total;
+    document.getElementById('editBorrowedModal').classList.add('active');
+    setTimeout(function() { document.getElementById('editBorrowedInput').focus(); }, 100);
+}
+
+function hideEditBorrowedModal() {
+    document.getElementById('editBorrowedModal').classList.remove('active');
+    adminEditingItemIdx = -1;
+}
+
+async function confirmEditBorrowed() {
+    if (adminEditingItemIdx < 0) return;
+    var newVal = parseInt(document.getElementById('editBorrowedInput').value) || 0;
+    if (newVal < 0) { showToast('借出数不能为负'); return; }
+    var it = items[adminEditingItemIdx];
+    if (newVal > it.total) { showToast('借出数不能超过总库存' + it.total); return; }
+    if (newVal === it.borrowed) { hideEditBorrowedModal(); return; }
+
+    showLoading();
+    try {
+        var { error } = await db.from('items').update({ borrowed: newVal }).eq('id', it.id);
+        if (error) { showToast('修改失败'); hideLoading(); return; }
+        it.borrowed = newVal;
+        hideEditBorrowedModal();
+        initAdmin();
+        showToast('借出数已修改为' + newVal);
+    } catch(e) {
+        console.error('修改借出数异常:', e);
+        showToast('网络异常，请重试');
+        hideLoading();
+    }
 }
 
 loadData();
